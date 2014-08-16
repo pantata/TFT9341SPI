@@ -15,9 +15,9 @@
 Pinout:
  
 (Arduino UNO  -> 4050 level shifter  -> TFT)
-  4050 pin 1  -> 3.3V, pin 8 GND 
-   TFT GND  -> GND
-   TFT VCC  -> 3.3V
+	4050 pin 1  -> 3.3V, pin 8 GND 
+	TFT GND  -> GND
+	TFT VCC  -> 3.3V
 
     Arduino D4   -> 4050 pin 3: 4050 pin 2 ->  TFT  RESET
     Arduino D5   -> 4050 pin 5: 4050 pin 4 -> TFT  CS
@@ -40,6 +40,6 @@ Pinout:
 *********************************************************************************
  
 Change notes:
-1.0  - initial version
-1.1 (16.8.14) - performance improvements
+	1.0  - initial version
+	1.1 (16.8.14) - performance improvements
 	 
