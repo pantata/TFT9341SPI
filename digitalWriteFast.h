@@ -1,4 +1,4 @@
-#include "WProgram.h" 
+#include "Arduino.h" 
 #include <wiring.h>
 
 #define BIT_READ(value, bit) (((value) >> (bit)) & 0x01)
