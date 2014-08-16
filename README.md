@@ -27,7 +27,8 @@ Pinout:
     Arduino D12  -> TFT MISO
     Arduino D13  -> 4050 pin 11: 4050 pin 12 -> TFT SCK
     
-(Arduino MEGA -> 4050 level shifter  -> TFT)    
+(Arduino MEGA -> 4050 level shifter  -> TFT)   
+ 
     Arduino D4   -> 4050 pin 3: 4050 pin 2 ->  TFT  RESET
     Arduino D5   -> 4050 pin 5: 4050 pin 4 -> TFT  CS
     Arduino D6   -> 4050 pin 6: 4050 pin 6 -> TFT  D/C
@@ -35,6 +36,7 @@ Pinout:
     Arduino D51  -> 4050 pin 9: 4050 pin 10 -> TFT MOSI
     Arduino D50  -> TFT MISO
     Arduino D52  -> 4050 pin 11: 4050 pin 12 -> TFT SCK
+    
 *********************************************************************************
  
 Change notes:
