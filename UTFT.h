@@ -69,10 +69,14 @@ struct _current_font
 	uint8_t numchars;
 };
 
+
+
 class UTFT
 {
 	public:
-		UTFT();
+	/*
+		UTFT();	
+		*/	
 		void InitLCD(byte orientation=LANDSCAPE);
 		void clrScr();
 		void drawPixel(int x, int y);
@@ -93,6 +97,7 @@ class UTFT
 		word getBackColor();
 		void print(char *st, int x, int y, int deg=0);
 		void print(String st, int x, int y, int deg=0);
+		void rotateChar(byte c, int x, int y, int pos, int deg);
 		void printNumI(long num, int x, int y, int length=0, char filler=' ');
 		void printNumF(double num, byte dec, int x, int y, char divider='.', int length=0, char filler=' ');
 		void setFont(uint8_t* font);
@@ -103,7 +108,7 @@ class UTFT
 		void drawBitmap(int x, int y, int sx, int sy, bitmapdatatype data, int deg, int rox, int roy);
 		void lcdOff();
 		void lcdOn();
-		void setContrast(char c);
+		//void setContrast(char c);
 		int  getDisplayXSize();
 		int	 getDisplayYSize();
 
@@ -115,6 +120,7 @@ class UTFT
 	Please note that these functions and variables are not documented
 	and I do not provide support on how to use them.
 */
+		byte __p1, __p2, __p3, __p4;
 		byte fch, fcl, bch, bcl;
 		byte orient;
 		long disp_x_size, disp_y_size;
@@ -136,7 +142,7 @@ class UTFT
 		void printChar(byte c, int x, int y);
 		void setXY(word x1, word y1, word x2, word y2);
 		void clrXY();
-		void rotateChar(byte c, int x, int y, int pos, int deg);
+		//void rotateChar(byte c, int x, int y, int pos, int deg);
 		//void _set_direction_registers(byte mode);
 		//void _fast_fill_16(int ch, int cl, long pix);
 		//void _fast_fill_8(int ch, long pix);
@@ -148,5 +154,6 @@ class UTFT
         INT8U readID(void);
     INT8U Read_Register(INT8U Addr, INT8U xParameter);
 };
+//extern UTFT Tft;
 
 #endif

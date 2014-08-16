@@ -23,27 +23,35 @@
   Please see the included documents for further information.
 */
 
+//pinout defs
+#define LED 7
+#define RESET 4
+#define CS 5
+#define DC 6
+
 #include "UTFT.h"
 #include <pins_arduino.h>
 #include <SPI.h>
+#include <digitalWriteFast.h>
 
-#define TFT_CS_LOW  {DDRD |= 0x20;PORTD &=~ 0x20;}
-#define TFT_CS_HIGH {DDRD |= 0x20;PORTD |=  0x20;}
-#define TFT_DC_LOW  {DDRD |= 0x40;PORTD &=~ 0x40;}
-#define TFT_DC_HIGH {DDRD |= 0x40;PORTD |=  0x40;}
-#define TFT_BL_OFF  {DDRD |= 0x80;PORTD &=~ 0x80;}
-#define TFT_BL_ON   {DDRD |= 0x80;PORTD |=  0x80;}
-#define TFT_RST_OFF {DDRD |= 0x10;PORTD |=  0x10;}
-#define TFT_RST_ON  {DDRD |= 0x10;PORTD &=~ 0x10;}
+#define TFT_BL_OFF digitalWriteFast(LED,LOW) 
+#define TFT_BL_ON  digitalWriteFast(LED,HIGH)
 
+#define TFT_RST_OFF digitalWriteFast(RESET, HIGH) 
+#define TFT_RST_ON  digitalWriteFast(RESET,LOW) 
+ 
+#define TFT_CS_LOW digitalWriteFast(CS,LOW) 
+#define TFT_CS_HIGH digitalWriteFast(CS,HIGH) 
 
-
-UTFT::UTFT() {
-    disp_x_size=239;
-    disp_y_size=319;
-}
+#define TFT_DC_LOW  digitalWriteFast(DC,LOW) 
+#define TFT_DC_HIGH digitalWriteFast(DC,HIGH) 
 
 /*
+UTFT::UTFT()
+{
+}
+
+
 UTFT::UTFT(int x, int y) {
     disp_x_size=239;
     disp_y_size=319;
@@ -155,9 +163,18 @@ INT8U UTFT::readID(void)
 void UTFT::InitLCD(byte orientation)
 {
 
+	pinModeFast(LED,OUTPUT);
+	pinModeFast(RESET,OUTPUT);
+	pinModeFast(CS,OUTPUT);
+	pinModeFast(DC,OUTPUT);
+    
+    disp_x_size=239;
+    disp_y_size=319;
+    
     TFT_BL_ON;
 	orient=orientation;
     SPI.begin();
+    
     TFT_CS_HIGH;
     TFT_DC_HIGH;
     INT8U i=0, TFTDriver=0;
@@ -292,17 +309,24 @@ void UTFT::setXY(word x1, word y1, word x2, word y2)
 		swap(word, y1, y2)
 	}
 
-	LCD_Write_COM(0x2a);
-	LCD_Write_DATA(x1>>8);
-	LCD_Write_DATA(x1);
-	LCD_Write_DATA(x2>>8);
-	LCD_Write_DATA(x2);
-	LCD_Write_COM(0x2b);
-	LCD_Write_DATA(y1>>8);
-	LCD_Write_DATA(y1);
-	LCD_Write_DATA(y2>>8);
-	LCD_Write_DATA(y2);
-	LCD_Write_COM(0x2c);
+    TFT_DC_LOW;
+    TFT_CS_LOW;
+    SPI.transfer(0x2a);
+    TFT_DC_HIGH;
+	SPI.transfer(x1>>8);
+	SPI.transfer(x1);
+	SPI.transfer(x2>>8);
+	SPI.transfer(x2);
+    TFT_DC_LOW;
+    SPI.transfer(0x2b);
+    TFT_DC_HIGH;
+	SPI.transfer(y1>>8);
+	SPI.transfer(y1);
+	SPI.transfer(y2>>8);
+	SPI.transfer(y2);
+	TFT_DC_LOW;
+    SPI.transfer(0x2c);
+    TFT_CS_HIGH;
 }
 
 void UTFT::clrXY()
@@ -490,12 +514,15 @@ void UTFT::clrScr()
 {
 	long i;
     clrXY();
+    TFT_DC_HIGH;
+    TFT_CS_LOW;
     for (int i=0; i<((disp_x_size+1)*(disp_y_size+1)); i++)
     {
         // black
-        WRITE_DATA(0); // hi bit of the color
-        WRITE_DATA(0); // low bit of the color
+	    SPI.transfer(0);
+    	SPI.transfer(0);
     }
+     TFT_CS_HIGH;
 }
 
 void UTFT::fillScr(byte r, byte g, byte b)
@@ -513,12 +540,14 @@ void UTFT::fillScr(word color)
 	cl=byte(color & 0xFF);
 	
     clrXY();
+    TFT_DC_HIGH;
+    TFT_CS_LOW;
     for (int i=0; i<((disp_x_size+1)*(disp_y_size+1)); i++)
     {
-        // black
-        WRITE_DATA(ch); // hi bit of the color
-        WRITE_DATA(cl); // low bit of the color
+	    SPI.transfer(ch);
+    	SPI.transfer(cl);
     }
+    TFT_CS_HIGH;
 }
 
 void UTFT::setColor(byte r, byte g, byte b)
@@ -637,12 +666,15 @@ void UTFT::drawHLine(int x, int y, int l)
 		x -= l;
 	}
 	setXY(x, y, x+l, y);
-	
+	TFT_DC_HIGH;
+    TFT_CS_LOW;
 		for (int i=0; i<l+1; i++)
 		{
-			LCD_Write_DATA(fch, fcl);
+			//LCD_Write_DATA(fch, fcl);
+			SPI.transfer(fch);
+			SPI.transfer(fcl);
 		}
-	
+	TFT_CS_HIGH;
 
 	clrXY();
 }
@@ -657,11 +689,15 @@ void UTFT::drawVLine(int x, int y, int l)
 
 	setXY(x, y, x, y+l);
 
+    TFT_DC_HIGH;
+    TFT_CS_LOW;
 		for (int i=0; i<l+1; i++)
 		{
-			LCD_Write_DATA(fch, fcl);
+			//LCD_Write_DATA(fch, fcl);
+			SPI.transfer(fch);
+			SPI.transfer(fcl);
 		}
-
+    TFT_CS_HIGH;
 	clrXY();
 }
 
@@ -751,14 +787,12 @@ void UTFT::printChar(byte c, int x, int y)
 
 void UTFT::rotateChar(byte c, int x, int y, int pos, int deg)
 {
-	byte i,j,ch;
+ 	byte i,j,ch;
 	word temp; 
 	int newx,newy;
 	double radian;
 	radian=deg*0.0175;  
-
-
-
+    
 	temp=((c-cfont.offset)*((cfont.x_size/8)*cfont.y_size))+4;
 	for(j=0;j<cfont.y_size;j++) 
 	{
@@ -785,7 +819,6 @@ void UTFT::rotateChar(byte c, int x, int y, int pos, int deg)
 		}
 		temp+=(cfont.x_size/8);
 	}
-
 	clrXY();
 }
 
@@ -974,7 +1007,7 @@ void UTFT::drawBitmap(int x, int y, int sx, int sy, bitmapdatatype data, int sca
 					}
 		else
 		{
-						for (ty=0; ty<sy; ty++)
+			for (ty=0; ty<sy; ty++)
 			{
 				setXY(x, y+ty, x+sx-1, y+ty);
 				for (tx=sx-1; tx>=0; tx--)
@@ -1049,24 +1082,27 @@ void UTFT::drawBitmap(int x, int y, int sx, int sy, bitmapdatatype data, int deg
 				setXY(newx, newy, newx, newy);
 				LCD_Write_DATA(col>>8,col & 0xff);
 			}
+
 	}
 	clrXY();
 }
 
 void UTFT::lcdOff()
 {
-
+    TFT_BL_OFF;
 }
 
 void UTFT::lcdOn()
 {
-
+    TFT_BL_ON;
 }
 
+/*
 void UTFT::setContrast(char c)
 {
 
 }
+*/
 
 int UTFT::getDisplayXSize()
 {
@@ -1083,3 +1119,5 @@ int UTFT::getDisplayYSize()
 	else
 		return disp_x_size+1;
 }
+
+UTFT Tft=UTFT();
