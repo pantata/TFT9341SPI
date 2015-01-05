@@ -40,8 +40,11 @@ Pinout:
 *********************************************************************************
  
 Change notes:
+
 	1.0  - initial version
+	
 	1.1 (16.8.14) - performance improvements
+	
 	1.2 (5.1.15)  - added function setRotation setRotation - allow rotate display (0=landscape, 1=portrait, 2 = landscape, 3=portrait)
 				  - comment out #define FASTSPI in UTFT.h when use ethernet shield
 				  - removed readID() from  display init
