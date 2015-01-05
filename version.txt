@@ -1,3 +1,4 @@
 Version:
 	1.0	09.11.2013 -  initial release
-
+	1.1 	16.08.2014 - performance improvements
+	1.2 	05.01.2015  - added function setRotation setRotation - allow rotate display (

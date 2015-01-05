@@ -15,7 +15,10 @@
 #ifndef UTFT_h
 #define UTFT_h
 
-#define UTFT_VERSION	270
+#define FASTSPI //comment when use ethernet
+
+#define UTFT_VERSION 270
+#define VERSION9341 12
 
 #define LEFT 0
 #define RIGHT 9999
@@ -23,6 +26,22 @@
 
 #define PORTRAIT 0
 #define LANDSCAPE 1
+
+
+//pinout defs
+
+/*
+#define LED 7
+#define RESET 4
+#define CS 5
+#define DC 6
+*/
+
+#define LED 7
+#define RESET 4
+#define CS 2
+#define DC 8
+
 
 //*********************************
 // COLORS
@@ -84,11 +103,13 @@ class UTFT
 		void fillScr(byte r, byte g, byte b);
 		void fillScr(word color);
 		void drawRect(int x1, int y1, int x2, int y2);
-		void drawRoundRect(int x1, int y1, int x2, int y2);
-		void fillRect(int x1, int y1, int x2, int y2);
-		void fillRoundRect(int x1, int y1, int x2, int y2);
+        void fillRect(int x1, int y1, int x2, int y2);
+
+        void drawRoundRect(int x1, int y1, int x2, int y2);
+        void fillRoundRect(int x1, int y1, int x2, int y2);
 		void drawCircle(int x, int y, int radius);
 		void fillCircle(int x, int y, int radius);
+
 		void setColor(byte r, byte g, byte b);
 		void setColor(word color);
 		word getColor();
@@ -96,6 +117,7 @@ class UTFT
 		void setBackColor(uint32_t color);
 		word getBackColor();
 		void print(char *st, int x, int y, int deg=0);
+		void printC(String st, int x, int y, uint32_t color=VGA_WHITE);
 		void print(String st, int x, int y, int deg=0);
 		void rotateChar(byte c, int x, int y, int pos, int deg);
 		void printNumI(long num, int x, int y, int length=0, char filler=' ');
@@ -108,6 +130,7 @@ class UTFT
 		void drawBitmap(int x, int y, int sx, int sy, bitmapdatatype data, int deg, int rox, int roy);
 		void lcdOff();
 		void lcdOn();
+        void setRotation(uint8_t m);
 		//void setContrast(char c);
 		int  getDisplayXSize();
 		int	 getDisplayYSize();
@@ -129,23 +152,19 @@ class UTFT
 		//regsize B_RS, B_WR, B_CS, B_RST, B_SDA, B_SCL, B_ALE;
 		_current_font	cfont;
 		boolean _transparent;
+        uint8_t rotation;
 
 		//void LCD_Writ_Bus(char VH,char VL, byte mode);
 		void LCD_Write_COM(char VL);
 		void LCD_Write_DATA(char VH,char VL);
 		void LCD_Write_DATA(char VL);
 		void LCD_Write_COM_DATA(char com1,int dat1);
-		//void _hw_special_init();
 		void setPixel(word color);
 		void drawHLine(int x, int y, int l);
 		void drawVLine(int x, int y, int l);
 		void printChar(byte c, int x, int y);
 		void setXY(word x1, word y1, word x2, word y2);
 		void clrXY();
-		//void rotateChar(byte c, int x, int y, int pos, int deg);
-		//void _set_direction_registers(byte mode);
-		//void _fast_fill_16(int ch, int cl, long pix);
-		//void _fast_fill_8(int ch, long pix);
 		void _convert_float(char *buf, double num, int width, byte prec);
         void sendCMD(INT8U VL);
         void WRITE_DATA(INT8U VL);
@@ -154,6 +173,5 @@ class UTFT
         INT8U readID(void);
     INT8U Read_Register(INT8U Addr, INT8U xParameter);
 };
-//extern UTFT Tft;
 
 #endif

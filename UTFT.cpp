@@ -14,6 +14,7 @@
     D5  : CS
     D6  : D/C
     D7  : LED
+ 
     D11 : MOSI
     D12 : MISO
     D13 : SCK
@@ -23,11 +24,7 @@
   Please see the included documents for further information.
 */
 
-//pinout defs
-#define LED 7
-#define RESET 4
-#define CS 5
-#define DC 6
+
 
 #include "UTFT.h"
 #include <pins_arduino.h>
@@ -39,24 +36,13 @@
 
 #define TFT_RST_OFF digitalWriteFast(RESET, HIGH) 
 #define TFT_RST_ON  digitalWriteFast(RESET,LOW) 
- 
-#define TFT_CS_LOW digitalWriteFast(CS,LOW) 
+
+
+#define TFT_CS_LOW digitalWriteFast(CS,LOW)
 #define TFT_CS_HIGH digitalWriteFast(CS,HIGH) 
 
 #define TFT_DC_LOW  digitalWriteFast(DC,LOW) 
 #define TFT_DC_HIGH digitalWriteFast(DC,HIGH) 
-
-/*
-UTFT::UTFT()
-{
-}
-
-
-UTFT::UTFT(int x, int y) {
-    disp_x_size=239;
-    disp_y_size=319;
-}
-*/
 
 void UTFT::sendCMD(INT8U index)
 {
@@ -148,15 +134,21 @@ INT8U UTFT::readID(void)
             ToF=0;
         }
     }
-    if(!ToF)                                                            /* data!=ID                     */
+    /*
+    if(!ToF)                                                            // data!=ID
     {
+        
         Serial.print("Read TFT ID failed, ID should be 0x09341, but read ID = 0x");
         for(i=0;i<3;i++)
         {
             Serial.print(data[i],HEX);
         }
         Serial.println();
+        
+        
     }
+    */
+    delay(10);
     return ToF;
 }
 
@@ -174,7 +166,9 @@ void UTFT::InitLCD(byte orientation)
     TFT_BL_ON;
 	orient=orientation;
     SPI.begin();
+#ifdef FASTSPI
     SPI.setClockDivider( SPI_CLOCK_DIV2 );
+#endif
     TFT_CS_HIGH;
     TFT_DC_HIGH;
     INT8U i=0, TFTDriver=0;
@@ -182,12 +176,13 @@ void UTFT::InitLCD(byte orientation)
 	TFT_RST_ON;
 	delay(10);
 	TFT_RST_OFF;
-    
+    delay(10);
+    /*
     for(i=0;i<3;i++)
     {
         TFTDriver = readID();
     }
-    
+    */
 	sendCMD(0xCB);
 	WRITE_DATA(0x39);
 	WRITE_DATA(0x2C);
@@ -356,30 +351,6 @@ void UTFT::drawRect(int x1, int y1, int x2, int y2)
 	drawVLine(x2, y1, y2-y1);
 }
 
-void UTFT::drawRoundRect(int x1, int y1, int x2, int y2)
-{
-	int tmp;
-
-	if (x1>x2)
-	{
-		swap(int, x1, x2);
-	}
-	if (y1>y2)
-	{
-		swap(int, y1, y2);
-	}
-	if ((x2-x1)>4 && (y2-y1)>4)
-	{
-		drawPixel(x1+1,y1+1);
-		drawPixel(x2-1,y1+1);
-		drawPixel(x1+1,y2-1);
-		drawPixel(x2-1,y2-1);
-		drawHLine(x1+2, y1, x2-x1-4);
-		drawHLine(x1+2, y2, x2-x1-4);
-		drawVLine(x1, y1+2, y2-y1-4);
-		drawVLine(x2, y1+2, y2-y1-4);
-	}
-}
 
 void UTFT::fillRect(int x1, int y1, int x2, int y2)
 {
@@ -412,6 +383,32 @@ void UTFT::fillRect(int x1, int y1, int x2, int y2)
 		}
 	}
 
+
+
+void UTFT::drawRoundRect(int x1, int y1, int x2, int y2)
+{
+    int tmp;
+    
+    if (x1>x2)
+    {
+        swap(int, x1, x2);
+    }
+    if (y1>y2)
+    {
+        swap(int, y1, y2);
+    }
+    if ((x2-x1)>4 && (y2-y1)>4)
+    {
+        drawPixel(x1+1,y1+1);
+        drawPixel(x2-1,y1+1);
+        drawPixel(x1+1,y2-1);
+        drawPixel(x2-1,y2-1);
+        drawHLine(x1+2, y1, x2-x1-4);
+        drawHLine(x1+2, y2, x2-x1-4);
+        drawVLine(x1, y1+2, y2-y1-4);
+        drawVLine(x2, y1+2, y2-y1-4);
+    }
+}
 
 void UTFT::fillRoundRect(int x1, int y1, int x2, int y2)
 {
@@ -509,6 +506,7 @@ void UTFT::fillCircle(int x, int y, int radius)
 				break;
 			}
 }
+
 
 void UTFT::clrScr()
 {
@@ -670,7 +668,6 @@ void UTFT::drawHLine(int x, int y, int l)
     TFT_CS_LOW;
 		for (int i=0; i<l+1; i++)
 		{
-			//LCD_Write_DATA(fch, fcl);
 			SPI.transfer(fch);
 			SPI.transfer(fcl);
 		}
@@ -693,7 +690,6 @@ void UTFT::drawVLine(int x, int y, int l)
     TFT_CS_LOW;
 		for (int i=0; i<l+1; i++)
 		{
-			//LCD_Write_DATA(fch, fcl);
 			SPI.transfer(fch);
 			SPI.transfer(fcl);
 		}
@@ -850,11 +846,18 @@ void UTFT::print(char *st, int x, int y, int deg)
 			rotateChar(*st++, x, y, i, deg);
 }
 
+void UTFT::printC(String st, int x, int y, uint32_t color)
+{
+    char buf[st.length()+1];
+    setColor(color);
+    st.toCharArray(buf, st.length()+1);
+    print(buf, x, y, 0);
+}
+
 void UTFT::print(String st, int x, int y, int deg)
 {
 	char buf[st.length()+1];
-
-	st.toCharArray(buf, st.length()+1);
+    st.toCharArray(buf, st.length()+1);
 	print(buf, x, y, deg);
 }
 
@@ -1118,6 +1121,37 @@ int UTFT::getDisplayYSize()
 		return disp_y_size+1;
 	else
 		return disp_x_size+1;
+}
+
+#define MADCTL_MY  0x80
+#define MADCTL_MX  0x40
+#define MADCTL_MV  0x20
+#define MADCTL_ML  0x10
+#define MADCTL_RGB 0x00
+#define MADCTL_BGR 0x08
+#define MADCTL_MH  0x04
+
+void UTFT::setRotation(uint8_t m) {
+    sendCMD(0x36);
+    rotation = m % 4; // can't be higher than 3
+    switch (rotation) {
+        case 0:
+            WRITE_DATA(MADCTL_MX | MADCTL_BGR);
+            orient=LANDSCAPE;
+            break;
+        case 1:
+            WRITE_DATA(MADCTL_MV | MADCTL_BGR);
+            orient=PORTRAIT;
+            break;
+        case 2:
+            WRITE_DATA(MADCTL_MY | MADCTL_BGR);
+            orient=LANDSCAPE;
+            break;
+        case 3:
+            WRITE_DATA(MADCTL_MX | MADCTL_MY | MADCTL_MV | MADCTL_BGR);
+            orient=PORTRAIT;
+            break;
+    }
 }
 
 UTFT Tft=UTFT();
