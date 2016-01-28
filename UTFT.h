@@ -15,12 +15,15 @@
 #ifndef UTFT_h
 #define UTFT_h
 
-#define FASTSPI //comment when use ethernet
+#define ARM
+//#define AVR
+
+//#define FASTSPI //comment when use ethernet
 
 #define UTFT_VERSION 270
 #define VERSION9341 12
 
-#define LEFT 0
+#define LEFT 1
 #define RIGHT 9999
 #define CENTER 9998
 
@@ -29,19 +32,17 @@
 
 
 //pinout defs
-
-/*
-#define LED 7
-#define RESET 4
-#define CS 5
-#define DC 6
-*/
-
-#define LED 7
-#define RESET 4
-#define CS 2
-#define DC 8
-
+#if defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
+	#define CS 48
+	#define RESET 33
+	#define DC 47
+	#define LED 46	
+#else
+	#define CS 4
+	#define RESET 5
+	#define DC 6	
+	#define LED 7	
+#endif
 
 //*********************************
 // COLORS
@@ -64,6 +65,27 @@
 #define VGA_FUCHSIA		0xF81F
 #define VGA_PURPLE		0x8010
 #define VGA_TRANSPARENT	0xFFFFFFFF
+
+#define ILI9341_BLACK       0x0000      /*   0,   0,   0 */
+#define ILI9341_NAVY        0x000F      /*   0,   0, 128 */
+#define ILI9341_DARKGREEN   0x03E0      /*   0, 128,   0 */
+#define ILI9341_DARKCYAN    0x03EF      /*   0, 128, 128 */
+#define ILI9341_MAROON      0x7800      /* 128,   0,   0 */
+#define ILI9341_PURPLE      0x780F      /* 128,   0, 128 */
+#define ILI9341_OLIVE       0x7BE0      /* 128, 128,   0 */
+#define ILI9341_LIGHTGREY   0xC618      /* 192, 192, 192 */
+#define ILI9341_DARKGREY    0x2945      /* 128, 128, 128 */
+#define ILI9341_BLUE        0x001F      /*   0,   0, 255 */
+#define ILI9341_GREEN       0x07E0      /*   0, 255,   0 */
+#define ILI9341_CYAN        0x07FF      /*   0, 255, 255 */
+#define ILI9341_RED         0xF800      /* 255,   0,   0 */
+#define ILI9341_MAGENTA     0xF81F      /* 255,   0, 255 */
+#define ILI9341_YELLOW      0xFFE0      /* 255, 255,   0 */
+#define ILI9341_WHITE       0xFFFF      /* 255, 255, 255 */
+#define ILI9341_ORANGE      0xFD20      /* 255, 165,   0 */
+#define ILI9341_GREENYELLOW 0xAFE5      /* 173, 255,  47 */
+#define ILI9341_PINK        0xF81F
+
 
 #include "Arduino.h"
 //#include "HW_AVR_defines.h"
@@ -92,10 +114,7 @@ struct _current_font
 
 class UTFT
 {
-	public:
-	/*
-		UTFT();	
-		*/	
+	public:	
 		void InitLCD(byte orientation=LANDSCAPE);
 		void clrScr();
 		void drawPixel(int x, int y);

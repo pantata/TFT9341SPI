@@ -25,11 +25,14 @@
 */
 
 
-
+#include "Arduino.h"
 #include "UTFT.h"
 #include <pins_arduino.h>
 #include <SPI.h>
+
+#ifdef AVR
 #include <digitalWriteFast.h>
+
 
 #define TFT_BL_OFF digitalWriteFast(LED,LOW) 
 #define TFT_BL_ON  digitalWriteFast(LED,HIGH)
@@ -43,6 +46,27 @@
 
 #define TFT_DC_LOW  digitalWriteFast(DC,LOW) 
 #define TFT_DC_HIGH digitalWriteFast(DC,HIGH) 
+#define PINMODE(x,y) pinModeFast(x,y)
+
+#elif defined ARM
+
+#define TFT_BL_OFF digitalWrite(LED,LOW) 
+#define TFT_BL_ON  digitalWrite(LED,HIGH)
+
+#define TFT_RST_OFF digitalWrite(RESET, HIGH) 
+#define TFT_RST_ON  digitalWrite(RESET,LOW) 
+
+
+#define TFT_CS_LOW digitalWrite(CS,LOW)
+#define TFT_CS_HIGH digitalWrite(CS,HIGH) 
+
+#define TFT_DC_LOW  digitalWrite(DC,LOW) 
+#define TFT_DC_HIGH digitalWrite(DC,HIGH) 
+
+#define PINMODE(x,y) pinMode(x,y)
+#endif
+
+
 
 void UTFT::sendCMD(INT8U index)
 {
@@ -155,34 +179,41 @@ INT8U UTFT::readID(void)
 void UTFT::InitLCD(byte orientation)
 {
 
-	pinModeFast(LED,OUTPUT);
-	pinModeFast(RESET,OUTPUT);
-	pinModeFast(CS,OUTPUT);
-	pinModeFast(DC,OUTPUT);
+	PINMODE(LED,OUTPUT);
+	PINMODE(RESET,OUTPUT);
+	PINMODE(CS,OUTPUT);
+	PINMODE(DC,OUTPUT);
     
     disp_x_size=239;
     disp_y_size=319;
     
     TFT_BL_ON;
 	orient=orientation;
-    SPI.begin();
+    
 #ifdef FASTSPI
-    SPI.setClockDivider( SPI_CLOCK_DIV2 );
+#ifdef ARM
+	SPI.setDataMode(SPI_MODE0);  
+#elif defined AVR
+	SPI.setClockDivider( SPI_CLOCK_DIV2 );
+#endif    
 #endif
+    SPI.begin();
     TFT_CS_HIGH;
     TFT_DC_HIGH;
     INT8U i=0, TFTDriver=0;
     
+    delay(100);
 	TFT_RST_ON;
-	delay(10);
+	delay(40);
 	TFT_RST_OFF;
-    delay(10);
+    delay(100);
     /*
     for(i=0;i<3;i++)
     {
         TFTDriver = readID();
     }
     */
+    
 	sendCMD(0xCB);
 	WRITE_DATA(0x39);
 	WRITE_DATA(0x2C);
@@ -190,10 +221,12 @@ void UTFT::InitLCD(byte orientation)
 	WRITE_DATA(0x34);
 	WRITE_DATA(0x02);
     
+    
 	sendCMD(0xCF);
 	WRITE_DATA(0x00);
 	WRITE_DATA(0XC1);
 	WRITE_DATA(0X30);
+    
     
 	sendCMD(0xE8);
 	WRITE_DATA(0x85);
@@ -282,7 +315,7 @@ void UTFT::InitLCD(byte orientation)
 	WRITE_DATA(0x0F);
     
 	sendCMD(0x11);    	//Exit Sleep
-	delay(120); 
+	delay(120);
     
 	sendCMD(0x29);    //Display on 
 	sendCMD(0x2c);
