@@ -1,24 +1,10 @@
 /*
   ILI9341 2.2 TFT SPI library
-  based on UTFT.cpp - Arduino/chipKit library support for Color TFT LCD Boards
-  Copyright (C)2010-2013 Henning Karlsen. All right reserved
- 
+  based on UTFT.cpp 
+  
   Compatible with other UTFT libraries.
- 
   Original library you can find at http://electronics.henningkarlsen.com/
- 
- Pinout:
- 
- (Arduino UNO : TFT)
-    D4  : RESET
-    D5  : CS
-    D6  : D/C
-    D7  : LED
- 
-    D11 : MOSI
-    D12 : MISO
-    D13 : SCK
- 
+  
   This library is free software; you can redistribute it and/or
   modify it under the terms of the CC BY-NC-SA 3.0 license.
   Please see the included documents for further information.
@@ -26,125 +12,87 @@
 
 
 #include "Arduino.h"
-#include "UTFT.h"
+#include "TFT9341.h"
 #include <pins_arduino.h>
-#include <SPI.h>
 
-#ifdef AVR
-#include <digitalWriteFast.h>
+#if defined(__AVR__)
+	#include <SPI.h>
+	#include <digitalWriteFast.h>
+	
+	#define TFT_BL_OFF digitalWriteFast(LED,LOW) 
+	#define TFT_BL_ON  digitalWriteFast(LED,HIGH)
 
-
-#define TFT_BL_OFF digitalWriteFast(LED,LOW) 
-#define TFT_BL_ON  digitalWriteFast(LED,HIGH)
-
-#define TFT_RST_OFF digitalWriteFast(RESET, HIGH) 
-#define TFT_RST_ON  digitalWriteFast(RESET,LOW) 
-
-
-#define TFT_CS_LOW digitalWriteFast(CS,LOW)
-#define TFT_CS_HIGH digitalWriteFast(CS,HIGH) 
-
-#define TFT_DC_LOW  digitalWriteFast(DC,LOW) 
-#define TFT_DC_HIGH digitalWriteFast(DC,HIGH) 
-#define PINMODE(x,y) pinModeFast(x,y)
-
-#elif defined ARM
-
-#define TFT_BL_OFF digitalWrite(LED,LOW) 
-#define TFT_BL_ON  digitalWrite(LED,HIGH)
-
-#define TFT_RST_OFF digitalWrite(RESET, HIGH) 
-#define TFT_RST_ON  digitalWrite(RESET,LOW) 
+	#define TFT_RST_OFF digitalWriteFast(RESET, HIGH) 
+	#define TFT_RST_ON  digitalWriteFast(RESET,LOW) 
 
 
-#define TFT_CS_LOW digitalWrite(CS,LOW)
-#define TFT_CS_HIGH digitalWrite(CS,HIGH) 
+	#define TFT_CS_LOW digitalWriteFast(CS,LOW)
+	#define TFT_CS_HIGH digitalWriteFast(CS,HIGH) 
 
-#define TFT_DC_LOW  digitalWrite(DC,LOW) 
-#define TFT_DC_HIGH digitalWrite(DC,HIGH) 
+	#define TFT_DC_LOW  digitalWriteFast(DC,LOW) 
+	#define TFT_DC_HIGH digitalWriteFast(DC,HIGH) 
+	#define PINMODE(x,y) pinModeFast(x,y)
+	
+	#define SPI_TRANSFER(x) SPI.transfer(x)
+	
+#elif defined(__arm__)
+	#include "SPInew.h"
+    
+	#define PINMODE(x,y) pinMode(x,y)  	 
+	#define SPI_TRANSFER(x) SPI.transfer(x)
 
-#define PINMODE(x,y) pinMode(x,y)
+	volatile uint32_t *setCSPin = &PORT->Group[g_APinDescription[CS].ulPort].OUTSET.reg;
+	volatile uint32_t *clrCSPin = &PORT->Group[g_APinDescription[CS].ulPort].OUTCLR.reg;
+	
+	volatile uint32_t *setDCPin = &PORT->Group[g_APinDescription[DC].ulPort].OUTSET.reg;
+	volatile uint32_t *clrDCPin = &PORT->Group[g_APinDescription[DC].ulPort].OUTCLR.reg;
+
+	volatile uint32_t *setLEDPin = &PORT->Group[g_APinDescription[LED].ulPort].OUTSET.reg;
+	volatile uint32_t *clrLEDPin = &PORT->Group[g_APinDescription[LED].ulPort].OUTCLR.reg;
+
+	volatile uint32_t *setRSTPin = &PORT->Group[g_APinDescription[RESET].ulPort].OUTSET.reg;
+	volatile uint32_t *clrRSTPin = &PORT->Group[g_APinDescription[RESET].ulPort].OUTCLR.reg;
+
+	#define TFT_CS_LOW  *clrCSPin = (1ul << g_APinDescription[CS].ulPin)
+	#define TFT_CS_HIGH  *setCSPin = (1ul << g_APinDescription[CS].ulPin)
+
+	#define TFT_DC_LOW   *clrDCPin = (1ul << g_APinDescription[DC].ulPin)
+	#define TFT_DC_HIGH  *setDCPin = (1ul << g_APinDescription[DC].ulPin)
+
+	#define TFT_RST_OFF *setRSTPin = (1ul << g_APinDescription[RESET].ulPin)
+	#define TFT_RST_ON  *clrRSTPin = (1ul << g_APinDescription[RESET].ulPin)
+
+	#define TFT_BL_OFF *clrLEDPin = (1ul << g_APinDescription[LED].ulPin)
+	#define TFT_BL_ON  *setLEDPin = (1ul << g_APinDescription[LED].ulPin)					
 #endif
 
-
-
-void UTFT::sendCMD(INT8U index)
-{
-    TFT_DC_LOW;
-    TFT_CS_LOW;
-    SPI.transfer(index);
-    TFT_CS_HIGH;
-}
-
-void UTFT::WRITE_DATA(INT8U data)
+void TFT9341::LCD_Write_DATA(char VH,char VL)
 {
     TFT_DC_HIGH;
-    TFT_CS_LOW;
-    SPI.transfer(data);
-    TFT_CS_HIGH;
+    TFT_CS_LOW;      
+    SPI_TRANSFER(VH);
+    SPI_TRANSFER(VL);
+	TFT_CS_HIGH;    
+  
 }
 
-void UTFT::sendData(INT16U data)
-{
-    INT8U data1 = data>>8;
-    INT8U data2 = data&0xff;
-    TFT_DC_HIGH;
-    TFT_CS_LOW;
-    SPI.transfer(data1);
-    SPI.transfer(data2);
-    TFT_CS_HIGH;
-}
-
-void UTFT::WRITE_Package(INT16U *data, INT8U howmany)
-{
-    INT16U    data1 = 0;
-    INT8U   data2 = 0;
-    
-    TFT_DC_HIGH;
-    TFT_CS_LOW;
-    INT8U count=0;
-    for(count=0;count<howmany;count++)
-    {
-        data1 = data[count]>>8;
-        data2 = data[count]&0xff;
-        SPI.transfer(data1);
-        SPI.transfer(data2);
-    }
-    TFT_CS_HIGH;
-}
-
-void UTFT::LCD_Write_COM(char VL)
-{
-    sendCMD(VL);
-}
-
-void UTFT::LCD_Write_DATA(char VH,char VL)
-{
-    WRITE_DATA(VH);
-    WRITE_DATA(VL);
-}
-
-void UTFT::LCD_Write_DATA(char VL)
-{
-    WRITE_DATA(VL);
-}
-
-
-INT8U UTFT::Read_Register(INT8U Addr, INT8U xParameter)
+INT8U TFT9341::Read_Register(INT8U Addr, INT8U xParameter)
 {
     INT8U data=0;
-    sendCMD(0xd9);                                                      /* ext command                  */
-    WRITE_DATA(0x10+xParameter);                                        /* 0x11 is the first Parameter  */
     TFT_DC_LOW;
-    TFT_CS_LOW;
-    SPI.transfer(Addr);
+    TFT_CS_LOW;    
+    SPI_TRANSFER(0xd9);      
+    TFT_DC_HIGH;    
+    SPI_TRANSFER(0x10+xParameter);  
+    TFT_DC_LOW;
+    SPI_TRANSFER(Addr);
     TFT_DC_HIGH;
-    data = SPI.transfer(0);
+    data = SPI_TRANSFER(0);
     TFT_CS_HIGH;
     return data;
 }
 
-INT8U UTFT::readID(void)
+INT8U TFT9341::readID(void)
 {
     INT8U i=0;
     INT8U data[3] ;
@@ -158,27 +106,14 @@ INT8U UTFT::readID(void)
             ToF=0;
         }
     }
-    /*
-    if(!ToF)                                                            // data!=ID
-    {
-        
-        Serial.print("Read TFT ID failed, ID should be 0x09341, but read ID = 0x");
-        for(i=0;i<3;i++)
-        {
-            Serial.print(data[i],HEX);
-        }
-        Serial.println();
-        
-        
-    }
-    */
     delay(10);
     return ToF;
 }
 
-void UTFT::InitLCD(byte orientation)
+void TFT9341::InitLCD(byte orientation)
 {
-
+	
+	
 	PINMODE(LED,OUTPUT);
 	PINMODE(RESET,OUTPUT);
 	PINMODE(CS,OUTPUT);
@@ -189,142 +124,178 @@ void UTFT::InitLCD(byte orientation)
     
     TFT_BL_ON;
 	orient=orientation;
+
+#if defined(__AVR__)
+	SPI.begin();
+	#if defined(SPI_MODE_FAST)
+		SPI.setClockDivider( SPI_CLOCK_DIV2 );	
+	#endif	
+#elif defined(__arm__)
+	SPI.begin();
+	#if defined(SPI_MODE_FAST)				
+		SPI.beginTransaction(SPISettings(SPISPEED, MSBFIRST, SPI_MODE0));  
+	#endif
+#endif  
+  
     
-#ifdef FASTSPI
-#ifdef ARM
-	SPI.setDataMode(SPI_MODE0);  
-#elif defined AVR
-	SPI.setClockDivider( SPI_CLOCK_DIV2 );
-#endif    
-#endif
-    SPI.begin();
     TFT_CS_HIGH;
     TFT_DC_HIGH;
-    INT8U i=0, TFTDriver=0;
-    
-    delay(100);
+
+    TFT_RST_OFF;
+    delay(5);
 	TFT_RST_ON;
-	delay(40);
+	delay(20);
 	TFT_RST_OFF;
     delay(100);
-    /*
-    for(i=0;i<3;i++)
-    {
-        TFTDriver = readID();
-    }
-    */
     
-	sendCMD(0xCB);
-	WRITE_DATA(0x39);
-	WRITE_DATA(0x2C);
-	WRITE_DATA(0x00);
-	WRITE_DATA(0x34);
-	WRITE_DATA(0x02);
+	TFT_DC_LOW;
+    TFT_CS_LOW;
+    SPI_TRANSFER(0xCB);
+    TFT_DC_HIGH;	
+    SPI_TRANSFER(0x39);
+    SPI_TRANSFER(0x2C);
+    SPI_TRANSFER(0x00);
+    SPI_TRANSFER(0x34);
+    SPI_TRANSFER(0x02);        
     
+	TFT_DC_LOW;    
+	SPI_TRANSFER(0xCF);
+    TFT_DC_HIGH;	
+	SPI_TRANSFER(0x00);
+	SPI_TRANSFER(0XC1);
+	SPI_TRANSFER(0X30);
+
+	TFT_DC_LOW;     
+	SPI_TRANSFER(0xE8);
+	TFT_DC_HIGH;
+	SPI_TRANSFER(0x85);
+	SPI_TRANSFER(0x00);
+	SPI_TRANSFER(0x78);
     
-	sendCMD(0xCF);
-	WRITE_DATA(0x00);
-	WRITE_DATA(0XC1);
-	WRITE_DATA(0X30);
+    TFT_DC_LOW;     
+	SPI_TRANSFER(0xEA);
+    TFT_DC_HIGH; 	
+	SPI_TRANSFER(0x00);
+	SPI_TRANSFER(0x00);
     
+    TFT_DC_LOW; 
+	SPI_TRANSFER(0xED);
+	TFT_DC_HIGH;	
+	SPI_TRANSFER(0x64);
+	SPI_TRANSFER(0x03);
+	SPI_TRANSFER(0X12);
+	SPI_TRANSFER(0X81);
     
-	sendCMD(0xE8);
-	WRITE_DATA(0x85);
-	WRITE_DATA(0x00);
-	WRITE_DATA(0x78);
+    TFT_DC_LOW; 
+	SPI_TRANSFER(0xF7);
+	TFT_DC_HIGH;		
+	SPI_TRANSFER(0x20);
     
-	sendCMD(0xEA);
-	WRITE_DATA(0x00);
-	WRITE_DATA(0x00);
+    TFT_DC_LOW;
+	SPI_TRANSFER(0xC0);    	
+	TFT_DC_HIGH;
+	SPI_TRANSFER(0x23);   	
     
-	sendCMD(0xED);
-	WRITE_DATA(0x64);
-	WRITE_DATA(0x03);
-	WRITE_DATA(0X12);
-	WRITE_DATA(0X81);
+    TFT_DC_LOW;
+	SPI_TRANSFER(0xC1);    	
+	TFT_DC_HIGH;
+	SPI_TRANSFER(0x10);   	
     
-	sendCMD(0xF7);
-	WRITE_DATA(0x20);
+    TFT_DC_LOW;
+	SPI_TRANSFER(0xC5);    	
+	TFT_DC_HIGH;
+	SPI_TRANSFER(0x3e);   	
+	SPI_TRANSFER(0x28);
     
-	sendCMD(0xC0);    	//Power control
-	WRITE_DATA(0x23);   	//VRH[5:0]
-    
-	sendCMD(0xC1);    	//Power control
-	WRITE_DATA(0x10);   	//SAP[2:0];BT[3:0]
-    
-	sendCMD(0xC5);    	//VCM control
-	WRITE_DATA(0x3e);   	//Contrast
-	WRITE_DATA(0x28);
-    
-	sendCMD(0xC7);    	//VCM control2
-	WRITE_DATA(0x86);  	 //--
-    
-	sendCMD(0x36);    	// Memory Access Control
-	WRITE_DATA(0x48);  	//C8	   //48 68绔栧睆//28 E8 妯睆
-    
-	sendCMD(0x3A);
-	WRITE_DATA(0x55);
-    
-	sendCMD(0xB1);
-	WRITE_DATA(0x00);
-	WRITE_DATA(0x18);
-    
-	sendCMD(0xB6);    	// Display Function Control
-	WRITE_DATA(0x08);
-	WRITE_DATA(0x82);
-	WRITE_DATA(0x27);
-    
-	sendCMD(0xF2);    	// 3Gamma Function Disable
-	WRITE_DATA(0x00);
-    
-	sendCMD(0x26);    	//Gamma curve selected
-	WRITE_DATA(0x01);
-    
-	sendCMD(0xE0);    	//Set Gamma
-	WRITE_DATA(0x0F);
-	WRITE_DATA(0x31);
-	WRITE_DATA(0x2B);
-	WRITE_DATA(0x0C);
-	WRITE_DATA(0x0E);
-	WRITE_DATA(0x08);
-	WRITE_DATA(0x4E);
-	WRITE_DATA(0xF1);
-	WRITE_DATA(0x37);
-	WRITE_DATA(0x07);
-	WRITE_DATA(0x10);
-	WRITE_DATA(0x03);
-	WRITE_DATA(0x0E);
-	WRITE_DATA(0x09);
-	WRITE_DATA(0x00);
-    
-	sendCMD(0XE1);    	//Set Gamma
-	WRITE_DATA(0x00);
-	WRITE_DATA(0x0E);
-	WRITE_DATA(0x14);
-	WRITE_DATA(0x03);
-	WRITE_DATA(0x11);
-	WRITE_DATA(0x07);
-	WRITE_DATA(0x31);
-	WRITE_DATA(0xC1);
-	WRITE_DATA(0x48);
-	WRITE_DATA(0x08);
-	WRITE_DATA(0x0F);
-	WRITE_DATA(0x0C);
-	WRITE_DATA(0x31);
-	WRITE_DATA(0x36);
-	WRITE_DATA(0x0F);
-    
-	sendCMD(0x11);    	//Exit Sleep
+    TFT_DC_LOW;    
+	SPI_TRANSFER(0xC7);    	
+	TFT_DC_HIGH;	
+	SPI_TRANSFER(0x86);  	
+
+    TFT_DC_LOW;    
+	SPI_TRANSFER(0x36);    	
+	TFT_DC_HIGH;	
+	SPI_TRANSFER(0x48);  	
+
+    TFT_DC_LOW;    
+	SPI_TRANSFER(0x3A);
+	TFT_DC_HIGH;	
+	SPI_TRANSFER(0x55);
+
+    TFT_DC_LOW;    
+	SPI_TRANSFER(0xB1);
+	TFT_DC_HIGH;	
+	SPI_TRANSFER(0x00);
+	SPI_TRANSFER(0x18);
+
+    TFT_DC_LOW;    
+	SPI_TRANSFER(0xB6);    	// Display Function Control
+	TFT_DC_HIGH;	
+	SPI_TRANSFER(0x08);
+	SPI_TRANSFER(0x82);
+	SPI_TRANSFER(0x27);
+
+    TFT_DC_LOW;    
+	SPI_TRANSFER(0xF2);    	// 3Gamma Function Disable
+	TFT_DC_HIGH;	
+	SPI_TRANSFER(0x00);
+
+    TFT_DC_LOW;    
+	SPI_TRANSFER(0x26);    	//Gamma curve selected
+	TFT_DC_HIGH;	
+	SPI_TRANSFER(0x01);
+
+    TFT_DC_LOW;    
+	SPI_TRANSFER(0xE0);    	//Set Gamma
+	TFT_DC_HIGH;	
+	SPI_TRANSFER(0x0F);
+	SPI_TRANSFER(0x31);
+	SPI_TRANSFER(0x2B);
+	SPI_TRANSFER(0x0C);
+	SPI_TRANSFER(0x0E);
+	SPI_TRANSFER(0x08);
+	SPI_TRANSFER(0x4E);
+	SPI_TRANSFER(0xF1);
+	SPI_TRANSFER(0x37);
+	SPI_TRANSFER(0x07);
+	SPI_TRANSFER(0x10);
+	SPI_TRANSFER(0x03);
+	SPI_TRANSFER(0x0E);
+	SPI_TRANSFER(0x09);
+	SPI_TRANSFER(0x00);
+
+    TFT_DC_LOW;    
+	SPI_TRANSFER(0XE1);    	//Set Gamma
+	TFT_DC_HIGH;	
+	SPI_TRANSFER(0x00);
+	SPI_TRANSFER(0x0E);
+	SPI_TRANSFER(0x14);
+	SPI_TRANSFER(0x03);
+	SPI_TRANSFER(0x11);
+	SPI_TRANSFER(0x07);
+	SPI_TRANSFER(0x31);
+	SPI_TRANSFER(0xC1);
+	SPI_TRANSFER(0x48);
+	SPI_TRANSFER(0x08);
+	SPI_TRANSFER(0x0F);
+	SPI_TRANSFER(0x0C);
+	SPI_TRANSFER(0x31);
+	SPI_TRANSFER(0x36);
+	SPI_TRANSFER(0x0F);
+
+    TFT_DC_LOW;    
+	SPI_TRANSFER(0x11);    	//Exit Sleep
 	delay(120);
-    
-	sendCMD(0x29);    //Display on 
-	sendCMD(0x2c);
+
+	SPI_TRANSFER(0x29);    //Display on 
+	SPI_TRANSFER(0x2c);
+	TFT_CS_HIGH;		
     
 	cfont.font=0;
 	_transparent = false;
 }
 
-void UTFT::setXY(word x1, word y1, word x2, word y2)
+void TFT9341::setXY(word x1, word y1, word x2, word y2)
 {
 	int tmp;
 
@@ -339,25 +310,26 @@ void UTFT::setXY(word x1, word y1, word x2, word y2)
 
     TFT_DC_LOW;
     TFT_CS_LOW;
-    SPI.transfer(0x2a);
+    SPI_TRANSFER(0x2a);
     TFT_DC_HIGH;
-	SPI.transfer(x1>>8);
-	SPI.transfer(x1);
-	SPI.transfer(x2>>8);
-	SPI.transfer(x2);
+	SPI_TRANSFER(x1>>8);
+	SPI_TRANSFER(x1);
+	SPI_TRANSFER(x2>>8);
+	SPI_TRANSFER(x2);
     TFT_DC_LOW;
-    SPI.transfer(0x2b);
+    SPI_TRANSFER(0x2b);
     TFT_DC_HIGH;
-	SPI.transfer(y1>>8);
-	SPI.transfer(y1);
-	SPI.transfer(y2>>8);
-	SPI.transfer(y2);
+	SPI_TRANSFER(y1>>8);
+	SPI_TRANSFER(y1);
+	SPI_TRANSFER(y2>>8);
+	SPI_TRANSFER(y2);
 	TFT_DC_LOW;
-    SPI.transfer(0x2c);
+    SPI_TRANSFER(0x2c);
+    TFT_DC_HIGH;
     TFT_CS_HIGH;
 }
 
-void UTFT::clrXY()
+void TFT9341::clrXY()
 {
 	if (orient==PORTRAIT)
 		setXY(0,0,disp_x_size,disp_y_size);
@@ -365,7 +337,7 @@ void UTFT::clrXY()
 		setXY(0,0,disp_y_size,disp_x_size);
 }
 
-void UTFT::drawRect(int x1, int y1, int x2, int y2)
+void TFT9341::drawRect(int x1, int y1, int x2, int y2)
 {
 	int tmp;
 
@@ -385,7 +357,7 @@ void UTFT::drawRect(int x1, int y1, int x2, int y2)
 }
 
 
-void UTFT::fillRect(int x1, int y1, int x2, int y2)
+void TFT9341::fillRect(int x1, int y1, int x2, int y2)
 {
 	int tmp;
 
@@ -418,7 +390,7 @@ void UTFT::fillRect(int x1, int y1, int x2, int y2)
 
 
 
-void UTFT::drawRoundRect(int x1, int y1, int x2, int y2)
+void TFT9341::drawRoundRect(int x1, int y1, int x2, int y2)
 {
     int tmp;
     
@@ -443,7 +415,7 @@ void UTFT::drawRoundRect(int x1, int y1, int x2, int y2)
     }
 }
 
-void UTFT::fillRoundRect(int x1, int y1, int x2, int y2)
+void TFT9341::fillRoundRect(int x1, int y1, int x2, int y2)
 {
 	int tmp;
 
@@ -478,7 +450,7 @@ void UTFT::fillRoundRect(int x1, int y1, int x2, int y2)
 	}
 }
 
-void UTFT::drawCircle(int x, int y, int radius)
+void TFT9341::drawCircle(int x, int y, int radius)
 {
 	int f = 1 - radius;
 	int ddF_x = 1;
@@ -486,7 +458,6 @@ void UTFT::drawCircle(int x, int y, int radius)
 	int x1 = 0;
 	int y1 = radius;
  
-	//cbi(P_CS, B_CS);
 	setXY(x, y + radius, x, y + radius);
 	LCD_Write_DATA(fch,fcl);
 	setXY(x, y - radius, x, y - radius);
@@ -495,7 +466,7 @@ void UTFT::drawCircle(int x, int y, int radius)
 	LCD_Write_DATA(fch,fcl);
 	setXY(x - radius, y, x - radius, y);
 	LCD_Write_DATA(fch,fcl);
- 
+
 	while(x1 < y1)
 	{
 		if(f >= 0) 
@@ -524,11 +495,10 @@ void UTFT::drawCircle(int x, int y, int radius)
 		setXY(x - y1, y - x1, x - y1, y - x1);
 		LCD_Write_DATA(fch,fcl);
 	}
-	//sbi(P_CS, B_CS);
 	clrXY();
 }
 
-void UTFT::fillCircle(int x, int y, int radius)
+void TFT9341::fillCircle(int x, int y, int radius)
 {
 	for(int y1=-radius; y1<=0; y1++) 
 		for(int x1=-radius; x1<=0; x1++)
@@ -541,71 +511,75 @@ void UTFT::fillCircle(int x, int y, int radius)
 }
 
 
-void UTFT::clrScr()
+void TFT9341::clrScr()
 {
 	long i;
+
     clrXY();
+    TFT_CS_LOW;	
     TFT_DC_HIGH;
-    TFT_CS_LOW;
+    
     for (int i=0; i<((disp_x_size+1)*(disp_y_size+1)); i++)
     {
         // black
-	    SPI.transfer(0);
-    	SPI.transfer(0);
+	    SPI_TRANSFER(0);
+    	SPI_TRANSFER(0);
     }
      TFT_CS_HIGH;
 }
 
-void UTFT::fillScr(byte r, byte g, byte b)
+void TFT9341::fillScr(byte r, byte g, byte b)
 {
 	word color = ((r&248)<<8 | (g&252)<<3 | (b&248)>>3);
 	fillScr(color);
 }
 
-void UTFT::fillScr(word color)
+void TFT9341::fillScr(word color)
 {
 	long i;
 	char ch, cl;
 	
 	ch=byte(color>>8);
 	cl=byte(color & 0xFF);
-	
+	    
     clrXY();
-    TFT_DC_HIGH;
+    
     TFT_CS_LOW;
+    TFT_DC_HIGH;
+
     for (int i=0; i<((disp_x_size+1)*(disp_y_size+1)); i++)
     {
-	    SPI.transfer(ch);
-    	SPI.transfer(cl);
+	    SPI_TRANSFER(ch);
+    	SPI_TRANSFER(cl);
     }
     TFT_CS_HIGH;
 }
 
-void UTFT::setColor(byte r, byte g, byte b)
+void TFT9341::setColor(byte r, byte g, byte b)
 {
 	fch=((r&248)|g>>5);
 	fcl=((g&28)<<3|b>>3);
 }
 
-void UTFT::setColor(word color)
+void TFT9341::setColor(word color)
 {
 	fch=byte(color>>8);
 	fcl=byte(color & 0xFF);
 }
 
-word UTFT::getColor()
+word TFT9341::getColor()
 {
 	return (fch<<8) | fcl;
 }
 
-void UTFT::setBackColor(byte r, byte g, byte b)
+void TFT9341::setBackColor(byte r, byte g, byte b)
 {
 	bch=((r&248)|g>>5);
 	bcl=((g&28)<<3|b>>3);
 	_transparent=false;
 }
 
-void UTFT::setBackColor(uint32_t color)
+void TFT9341::setBackColor(uint32_t color)
 {
 	if (color==VGA_TRANSPARENT)
 		_transparent=true;
@@ -617,25 +591,24 @@ void UTFT::setBackColor(uint32_t color)
 	}
 }
 
-word UTFT::getBackColor()
+word TFT9341::getBackColor()
 {
 	return (bch<<8) | bcl;
 }
 
-void UTFT::setPixel(word color)
+void TFT9341::setPixel(word color)
 {
 	LCD_Write_DATA((color>>8),(color&0xFF));	// rrrrrggggggbbbbb
 }
 
-void UTFT::drawPixel(int x, int y)
+void TFT9341::drawPixel(int x, int y)
 {
-
 	setXY(x, y, x, y);
 	setPixel((fch<<8)|fcl);
 	clrXY();
 }
 
-void UTFT::drawLine(int x1, int y1, int x2, int y2)
+void TFT9341::drawLine(int x1, int y1, int x2, int y2)
 {
 	if (y1==y2)
 		drawHLine(x1, y1, x2-x1);
@@ -689,7 +662,7 @@ void UTFT::drawLine(int x1, int y1, int x2, int y2)
 	clrXY();
 }
 
-void UTFT::drawHLine(int x, int y, int l)
+void TFT9341::drawHLine(int x, int y, int l)
 {
 	if (l<0)
 	{
@@ -701,15 +674,15 @@ void UTFT::drawHLine(int x, int y, int l)
     TFT_CS_LOW;
 		for (int i=0; i<l+1; i++)
 		{
-			SPI.transfer(fch);
-			SPI.transfer(fcl);
+			SPI_TRANSFER(fch);
+			SPI_TRANSFER(fcl);
 		}
-	TFT_CS_HIGH;
 
 	clrXY();
+	TFT_CS_HIGH;	
 }
 
-void UTFT::drawVLine(int x, int y, int l)
+void TFT9341::drawVLine(int x, int y, int l)
 {
 	if (l<0)
 	{
@@ -723,20 +696,19 @@ void UTFT::drawVLine(int x, int y, int l)
     TFT_CS_LOW;
 		for (int i=0; i<l+1; i++)
 		{
-			SPI.transfer(fch);
-			SPI.transfer(fcl);
+			SPI_TRANSFER(fch);
+			SPI_TRANSFER(fcl);
 		}
-    TFT_CS_HIGH;
+
 	clrXY();
+    TFT_CS_HIGH;	
 }
 
-void UTFT::printChar(byte c, int x, int y)
+void TFT9341::printChar(byte c, int x, int y)
 {
 	byte i,ch;
 	word j;
 	word temp; 
-
-
   
 	if (!_transparent)
 	{
@@ -814,14 +786,13 @@ void UTFT::printChar(byte c, int x, int y)
 	clrXY();
 }
 
-void UTFT::rotateChar(byte c, int x, int y, int pos, int deg)
+void TFT9341::rotateChar(byte c, int x, int y, int pos, int deg)
 {
  	byte i,j,ch;
 	word temp; 
 	int newx,newy;
 	double radian;
 	radian=deg*0.0175;  
-    
 	temp=((c-cfont.offset)*((cfont.x_size/8)*cfont.y_size))+4;
 	for(j=0;j<cfont.y_size;j++) 
 	{
@@ -851,7 +822,7 @@ void UTFT::rotateChar(byte c, int x, int y, int pos, int deg)
 	clrXY();
 }
 
-void UTFT::print(char *st, int x, int y, int deg)
+void TFT9341::print(char *st, int x, int y, int deg)
 {
 	int stl, i;
 
@@ -879,7 +850,7 @@ void UTFT::print(char *st, int x, int y, int deg)
 			rotateChar(*st++, x, y, i, deg);
 }
 
-void UTFT::printC(String st, int x, int y, uint32_t color)
+void TFT9341::printC(String st, int x, int y, uint32_t color)
 {
     char buf[st.length()+1];
     setColor(color);
@@ -887,14 +858,14 @@ void UTFT::printC(String st, int x, int y, uint32_t color)
     print(buf, x, y, 0);
 }
 
-void UTFT::print(String st, int x, int y, int deg)
+void TFT9341::print(String st, int x, int y, int deg)
 {
 	char buf[st.length()+1];
     st.toCharArray(buf, st.length()+1);
 	print(buf, x, y, deg);
 }
 
-void UTFT::printNumI(long num, int x, int y, int length, char filler)
+void TFT9341::printNumI(long num, int x, int y, int length, char filler)
 {
 	char buf[25];
 	char st[27];
@@ -957,7 +928,7 @@ void UTFT::printNumI(long num, int x, int y, int length, char filler)
 	print(st,x,y);
 }
 
-void UTFT::printNumF(double num, byte dec, int x, int y, char divider, int length, char filler)
+void TFT9341::printNumF(double num, byte dec, int x, int y, char divider, int length, char filler)
 {
 	char st[27];
 	boolean neg=false;
@@ -999,7 +970,7 @@ void UTFT::printNumF(double num, byte dec, int x, int y, char divider, int lengt
 	print(st,x,y);
 }
 
-void UTFT::setFont(uint8_t* font)
+void TFT9341::setFont(uint8_t* font)
 {
 	cfont.font=font;
 	cfont.x_size=fontbyte(0);
@@ -1008,27 +979,27 @@ void UTFT::setFont(uint8_t* font)
 	cfont.numchars=fontbyte(3);
 }
 
-uint8_t* UTFT::getFont()
+uint8_t* TFT9341::getFont()
 {
 	return cfont.font;
 }
 
-uint8_t UTFT::getFontXsize()
+uint8_t TFT9341::getFontXsize()
 {
 	return cfont.x_size;
 }
 
-uint8_t UTFT::getFontYsize()
+uint8_t TFT9341::getFontYsize()
 {
 	return cfont.y_size;
 }
 
-void UTFT::drawBitmap(int x, int y, int sx, int sy, bitmapdatatype data, int scale)
+void TFT9341::drawBitmap(int x, int y, int sx, int sy, bitmapdatatype data, int scale)
 {
 	unsigned int col;
 	int tx, ty, tc, tsx, tsy;
 	byte r, g, b;
-
+	TFT_CS_LOW;
 	if (scale==1)
 	{
 		if (orient==PORTRAIT)
@@ -1093,16 +1064,17 @@ void UTFT::drawBitmap(int x, int y, int sx, int sy, bitmapdatatype data, int sca
 		}
 	}
 	clrXY();
+	TFT_CS_HIGH;
 }
 
-void UTFT::drawBitmap(int x, int y, int sx, int sy, bitmapdatatype data, int deg, int rox, int roy)
+void TFT9341::drawBitmap(int x, int y, int sx, int sy, bitmapdatatype data, int deg, int rox, int roy)
 {
 	unsigned int col;
 	int tx, ty, newx, newy;
 	byte r, g, b;
 	double radian;
 	radian=deg*0.0175;  
-
+    TFT_CS_LOW; 
 	if (deg==0)
 		drawBitmap(x, y, sx, sy, data);
 	else
@@ -1121,26 +1093,27 @@ void UTFT::drawBitmap(int x, int y, int sx, int sy, bitmapdatatype data, int deg
 
 	}
 	clrXY();
+	TFT_CS_HIGH;
 }
 
-void UTFT::lcdOff()
+void TFT9341::lcdOff()
 {
     TFT_BL_OFF;
 }
 
-void UTFT::lcdOn()
+void TFT9341::lcdOn()
 {
     TFT_BL_ON;
 }
 
 /*
-void UTFT::setContrast(char c)
+void TFT9341::setContrast(char c)
 {
 
 }
 */
 
-int UTFT::getDisplayXSize()
+int TFT9341::getDisplayXSize()
 {
 	if (orient==PORTRAIT)
 		return disp_x_size+1;
@@ -1148,7 +1121,7 @@ int UTFT::getDisplayXSize()
 		return disp_y_size+1;
 }
 
-int UTFT::getDisplayYSize()
+int TFT9341::getDisplayYSize()
 {
 	if (orient==PORTRAIT)
 		return disp_y_size+1;
@@ -1164,27 +1137,31 @@ int UTFT::getDisplayYSize()
 #define MADCTL_BGR 0x08
 #define MADCTL_MH  0x04
 
-void UTFT::setRotation(uint8_t m) {
-    sendCMD(0x36);
+void TFT9341::setRotation(uint8_t m) {
+    TFT_DC_LOW;
+    TFT_CS_LOW;
+    SPI_TRANSFER(0x36);
+    TFT_DC_HIGH;
     rotation = m % 4; // can't be higher than 3
     switch (rotation) {
         case 0:
-            WRITE_DATA(MADCTL_MX | MADCTL_BGR);
+            SPI_TRANSFER(MADCTL_MX | MADCTL_BGR);
             orient=LANDSCAPE;
             break;
         case 1:
-            WRITE_DATA(MADCTL_MV | MADCTL_BGR);
+            SPI_TRANSFER(MADCTL_MV | MADCTL_BGR);
             orient=PORTRAIT;
             break;
         case 2:
-            WRITE_DATA(MADCTL_MY | MADCTL_BGR);
+            SPI_TRANSFER(MADCTL_MY | MADCTL_BGR);
             orient=LANDSCAPE;
             break;
         case 3:
-            WRITE_DATA(MADCTL_MX | MADCTL_MY | MADCTL_MV | MADCTL_BGR);
+            SPI_TRANSFER(MADCTL_MX | MADCTL_MY | MADCTL_MV | MADCTL_BGR);
             orient=PORTRAIT;
             break;
     }
+    TFT_CS_HIGH;
 }
 
-UTFT Tft=UTFT();
+TFT9341 Tft=TFT9341();
