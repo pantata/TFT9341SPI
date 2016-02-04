@@ -14,9 +14,10 @@
 #include "Arduino.h"
 #include "TFT9341.h"
 #include <pins_arduino.h>
-
+#include <SPI.h>
+	
 #if defined(__AVR__)
-	#include <SPI.h>
+
 	#include <digitalWriteFast.h>
 	
 	#define TFT_BL_OFF digitalWriteFast(LED,LOW) 
@@ -36,8 +37,7 @@
 	#define SPI_TRANSFER(x) SPI.transfer(x)
 	
 #elif defined(__arm__)
-	#include "SPInew.h"
-    
+	    
 	#define PINMODE(x,y) pinMode(x,y)  	 
 	#define SPI_TRANSFER(x) SPI.transfer(x)
 
@@ -65,6 +65,8 @@
 	#define TFT_BL_OFF *clrLEDPin = (1ul << g_APinDescription[LED].ulPin)
 	#define TFT_BL_ON  *setLEDPin = (1ul << g_APinDescription[LED].ulPin)					
 #endif
+
+TFT9341::TFT9341() {}
 
 void TFT9341::LCD_Write_DATA(char VH,char VL)
 {
@@ -132,8 +134,9 @@ void TFT9341::InitLCD(byte orientation)
 	#endif	
 #elif defined(__arm__)
 	SPI.begin();
-	#if defined(SPI_MODE_FAST)				
-		SPI.beginTransaction(SPISettings(SPISPEED, MSBFIRST, SPI_MODE0));  
+	#if defined(SPI_MODE_FAST)
+		SPI.setClockDivider( 2 );				
+		  
 	#endif
 #endif  
   
@@ -1164,4 +1167,141 @@ void TFT9341::setRotation(uint8_t m) {
     TFT_CS_HIGH;
 }
 
+#define swap(a, b) { int16_t t = a; a = b; b = t; }
+void TFT9341::drawTriangle(int x1, int y1, int x2, int y2, int x3, int y3)
+{
+	drawLine(x1, y1, x2, y2);
+	drawLine(x2, y2, x3, y3);
+	drawLine(x3, y3, x1, y1);
+}
+
+void TFT9341::fillTriangle(int x1, int y1, int x2, int y2, int x3, int y3)
+{
+	int32_t xs, xe;
+	int16_t y, ly;
+
+	if (y1 > y2)
+	{
+		swap(y1, y2); 
+		swap(x1, x2);
+	}
+	if (y2 > y3)
+	{
+		swap(y3, y2);
+		swap(x3, x2);
+	}
+	if (y1 > y2)
+	{
+		swap(y1, y2);
+		swap(x1, x2);
+	}
+	
+	if(y1 == y3)	// Single line triangles
+	{
+		xs = xe = x1;
+		if(x2 < xs)			xs = x2;
+		else if(x2 > xe)	xe = x2;
+		if(x3 < xs)			xs = x3;
+		else if(x3 > xe)	xe = x3;
+		drawHLine(xs, y1, xe-xs);
+		return;
+	}
+	
+	// Upper part
+	if (y2 == y3) ly = y2;
+	else          ly = y2-1;
+	
+	for(y=y1; y<=ly; y++)
+	{
+		xs = x1 + (x2 - x1) * (y - y1) / (y2 - y1);
+		xe = x1 + (x3 - x1) * (y - y1) / (y3 - y1);
+		drawHLine(xs, y, xe-xs);
+	}
+	
+	// Lower part
+	for(; y<=y3; y++)
+	{
+		xs = x2 + (x3 - x2) * (y - y2) / (y3 - y2);
+		xe = x1 + (x3 - x1) * (y - y1) / (y3 - y1);
+		drawHLine(xs, y, xe-xs);
+	}
+}
+
+void TFT9341::drawArc(int x, int y, int r, int startAngle, int endAngle, int thickness)
+{
+	int rDelta = -(thickness/2);
+	int px, py, cx, cy;
+
+	startAngle -= 90;
+	endAngle   -= 90;
+	
+	if (startAngle!=endAngle)
+	{
+		for (int i=0; i<thickness; i++)
+		{
+			px = x + cos((startAngle*3.14)/180) * (r+rDelta+i);
+			py = y + sin((startAngle*3.14)/180) * (r+rDelta+i);
+			for (int d=startAngle+1; d<endAngle+1; d++)
+			{
+				cx = x + cos((d*3.14)/180) * (r+rDelta+i);
+				cy = y + sin((d*3.14)/180) * (r+rDelta+i);
+				drawLine(px, py, cx, cy);
+				px = cx;
+				py = cy;
+			}
+		}
+	}
+	else
+	{
+		px = x + cos((startAngle*3.14)/180) * (r+rDelta);
+		py = y + sin((startAngle*3.14)/180) * (r+rDelta);
+		cx = x + cos((startAngle*3.14)/180) * (r-rDelta);
+		cy = y + sin((startAngle*3.14)/180) * (r-rDelta);
+		drawLine(px, py, cx, cy);
+	}
+}
+
+void TFT9341::drawPie(int x, int y, int r, int startAngle, int endAngle)
+{
+	int px, py, cx, cy;
+
+	startAngle -= 90;
+	endAngle   -= 90;
+	if (startAngle>endAngle)
+		startAngle -= 360;
+	
+	px = x + cos((startAngle*3.14)/180) * r;
+	py = y + sin((startAngle*3.14)/180) * r;
+	drawLine(x, y, px, py);
+	for (int d=startAngle+1; d<endAngle+1; d++)
+	{
+		cx = x + cos((d*3.14)/180) * r;
+		cy = y + sin((d*3.14)/180) * r;
+		drawLine(px, py, cx, cy);
+		px = cx;
+		py = cy;
+	}
+	drawLine(x, y, px, py);
+}
+
+void TFT9341::fillPie(int x, int y, int r, int startAngle, int endAngle)
+{
+    int px, py, cx, cy;
+    
+    startAngle -= 90;
+    endAngle   -= 90;
+    if (startAngle>endAngle)
+        startAngle -= 360;
+    
+    px = x + cos((startAngle*3.14)/180) * r;
+    py = y + sin((startAngle*3.14)/180) * r;
+    drawLine(x, y, px, py);
+    for (int d=startAngle+1; d<endAngle+1; d++)
+    {
+        cx = x + cos((d*3.14)/180) * r;
+        cy = y + sin((d*3.14)/180) * r;
+        drawLine(x, y, cx, cy);
+    }
+    drawLine(x, y, px, py);
+}
 TFT9341 Tft=TFT9341();

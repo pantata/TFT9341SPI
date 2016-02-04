@@ -21,10 +21,11 @@
 	#define SPI_MODE_FAST
 #elif defined(__arm__)
      #define SPI_MODE_FAST     
+     //#define SPI_MODE_DMA
 #endif
 
-#define UTFT_VERSION 270
-#define VERSION9341 14
+#define UTFT_VERSION 300
+#define VERSION9341 15
 
 #define LEFT 1
 #define RIGHT 9999
@@ -40,15 +41,16 @@
 	#define RESET 33
 	#define DC 47
 	#define LED 46	
-#else  
+#elif defined(__arm__)
+	#define CS 13
+	#define RESET 12
+	#define DC 11	
+	#define LED 10	
+#else
 	#define CS 4
 	#define RESET 5
 	#define DC 6	
 	#define LED 7	
-#endif
-
-#if defined(SPI_MODE_DME)
-	#include <SPInew.h>
 #endif
 
 //*********************************
@@ -241,6 +243,7 @@ struct _current_font
 class TFT9341
 {
 	public:	
+		TFT9341();
 		void InitLCD(byte orientation=LANDSCAPE);
 		void clrScr();
 		void drawPixel(int x, int y);
@@ -279,6 +282,12 @@ class TFT9341
 		//void setContrast(char c);
 		int  getDisplayXSize();
 		int	 getDisplayYSize();
+		void	drawTriangle(int x1, int y1, int x2, int y2, int x3, int y3);
+		void	fillTriangle(int x1, int y1, int x2, int y2, int x3, int y3);
+		void	drawArc(int x, int y, int r, int startAngle, int endAngle, int thickness = 1);
+		void	drawPie(int x, int y, int r, int startAngle, int endAngle);
+        void    fillPie(int x, int y, int r, int startAngle, int endAngle);
+		
 
 /*
 	The functions and variables below should not normally be used.
