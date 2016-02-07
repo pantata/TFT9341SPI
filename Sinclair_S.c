@@ -3,9 +3,18 @@
 // Font size    : 8x8 pixels
 // Memory usage : 764 bytes
 
-#include <avr/pgmspace.h>
+#if defined(__AVR__)
+	#include <avr/pgmspace.h>
+	#define fontdatatype const uint8_t
+#elif defined(__PIC32MX__)
+	#define PROGMEM
+	#define fontdatatype const unsigned char
+#elif defined(__arm__)
+	#define PROGMEM
+	#define fontdatatype const unsigned char
+#endif
 
-const uint8_t Sinclair_S[764] PROGMEM={
+const fontdatatype Sinclair_S[764] PROGMEM={
 0x08,0x08,0x20,0x5F,
 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,  // <space>
 0x08,0x08,0x08,0x08,0x08,0x00,0x08,0x00,  // !

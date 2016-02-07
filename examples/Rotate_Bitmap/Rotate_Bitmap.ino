@@ -6,18 +6,22 @@
 // This program requires the UTFT library.
 //
 
-#include <UTFT.h>
+#include <TFT9341.h>
 #include <SPI.h>
-#include <avr/pgmspace.h>
+
+#if defined(__AVR__)
+	#include <avr/pgmspace.h>
+#endif
 
 
-UTFT myGLCD;
+TFT9341 myGLCD;
 
 extern unsigned int tux[0x400];
 
 void setup()
 {
-  myGLCD.InitLCD(LANDSCAPE);
+  myGLCD.InitLCD();
+  myGLCD.setRotation(2);
   myGLCD.fillScr(255, 255, 255);
   myGLCD.setColor(0, 0, 0);
 }

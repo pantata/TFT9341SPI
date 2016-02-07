@@ -5,9 +5,17 @@
 //  Created by Ludek Slouf on 28.03.15.
 //  Copyright (c) 2015 Ludek Slouf. All rights reserved.
 //
-
-#include <avr/pgmspace.h>
-const uint8_t Retro8x16[1524] PROGMEM={
+#if defined(__AVR__)
+	#include <avr/pgmspace.h>
+	#define fontdatatype const uint8_t
+#elif defined(__PIC32MX__)
+	#define PROGMEM
+	#define fontdatatype const unsigned char
+#elif defined(__arm__)
+	#define PROGMEM
+	#define fontdatatype const unsigned char
+#endif
+const fontdatatype Retro8x16[1524] PROGMEM={
     0x08,0x10,0x20,0x5F,
     0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,  // <space>
     0x10,0x10,0x10,0x10,0x10,0x10,0x10,0x10,0x10,0x10,0x00,0x00,0x10,0x10,0x00,0x00,  // !

@@ -3,9 +3,18 @@
 // Memory usage	: 764 bytes
 // # characters	: 95
 
-#include <avr/pgmspace.h>
+#if defined(__AVR__)
+	#include <avr/pgmspace.h>
+	#define fontdatatype const uint8_t
+#elif defined(__PIC32MX__)
+	#define PROGMEM
+	#define fontdatatype const unsigned char
+#elif defined(__arm__)
+	#define PROGMEM
+	#define fontdatatype const unsigned char
+#endif
 
-const uint8_t TinyFont[764] PROGMEM={
+const fontdatatype TinyFont[764] PROGMEM={
 0x08,0x08,0x20,0x5F,
 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00, // <Space>
 0x18,0x3C,0x3C,0x18,0x18,0x00,0x18,0x00, // !

@@ -9,16 +9,18 @@
 // This program requires the UTFT library.
 //
 
-#include <UTFT.h>
+#include <TFT9341.h>
 #include <SPI.h>
-#include <avr/pgmspace.h>
+#if defined(__AVR__)
+	#include <avr/pgmspace.h>
+#endif
 
 // Declare which fonts we will be using
 extern uint8_t SmallFont[];
 
 // Uncomment the next line for Arduino 2009/Uno
 
-UTFT myGLCD;
+TFT9341 myGLCD;
 
 extern unsigned int info[0x400];
 extern unsigned int icon[0x400];
@@ -27,6 +29,7 @@ extern unsigned int tux[0x400];
 void setup()
 {
   myGLCD.InitLCD();
+  myGLCD.setRotation(2);  
   myGLCD.setFont(SmallFont);
 }
 

@@ -11,7 +11,7 @@
 //
 
 #include <TFT9341.h>
-#include <SPInew.h>
+#include <SPI.h>
 
 // Declare which fonts we will be using
 extern uint8_t SmallFont[];

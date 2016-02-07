@@ -9,18 +9,19 @@
 // This program requires the UTFT library.
 //
 
-#include <UTFT.h>
+#include <TFT9341.h>
 #include <SPI.h>
 
 // Declare which fonts we will be using
 extern uint8_t BigFont[];
 extern uint8_t SevenSegNumFont[];
 
-UTFT myGLCD;
+TFT9341 myGLCD;
 
 void setup()
 {
   myGLCD.InitLCD();
+  myGLCD.setRotation(2);  
   myGLCD.clrScr();
   myGLCD.setFont(BigFont);
 }
