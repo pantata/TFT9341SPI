@@ -10,14 +10,14 @@
 // This program requires the UTFT library.
 //
 
-#include <TFT9341.h>
+#include <TFT9341_m0.h>
 #include <SPI.h>
 
 // Declare which fonts we will be using
 extern uint8_t SmallFont[];
 
 
-//TFT9341 Tft;   
+//TFT9341m0 Tft;   
 
 
 void setup()
@@ -25,9 +25,8 @@ void setup()
   randomSeed(analogRead(0));
   
 // Setup the LCD
-  delay(1000);
-  Tft.InitLCD();
-  Tft.setRotation(2);
+  //delay(1000);
+  Tft.InitLCD(3);
   Tft.setFont(SmallFont);
 }
 
@@ -87,7 +86,7 @@ void loop()
     Tft.drawPixel(i,119+(tan(((i*1.13)*3.14)/180)));
   }
 
-  delay(2000);
+  //delay(2000);
 
   Tft.setColor(0,0,0);
   Tft.fillRect(1,15,318,224);
@@ -117,7 +116,7 @@ void loop()
     buf[x-1]=y;
   }
 
-  delay(2000);
+  //delay(2000);
   
   Tft.setColor(0,0,0);
   Tft.fillRect(1,15,318,224);
@@ -146,7 +145,7 @@ void loop()
     Tft.fillRect(70+(i*20), 30+(i*20), 130+(i*20), 90+(i*20));
   }
 
-  delay(2000);
+  //delay(2000);
   
   Tft.setColor(0,0,0);
   Tft.fillRect(1,15,318,224);
@@ -175,7 +174,7 @@ void loop()
     Tft.fillRoundRect(190-(i*20), 30+(i*20), 250-(i*20), 90+(i*20));
   }
   
-  delay(2000);
+  //delay(2000);
   
   Tft.setColor(0,0,0);
   Tft.fillRect(1,15,318,224);
@@ -204,7 +203,7 @@ void loop()
     Tft.fillCircle(100+(i*20),60+(i*20), 30);
   }
   
-  delay(2000);
+  //delay(2000);
   
   Tft.setColor(0,0,0);
   Tft.fillRect(1,15,318,224);
@@ -231,7 +230,7 @@ void loop()
     Tft.drawLine(318, i, 330-(i*1.44), 224);
   }
   
-  delay(2000);
+  //delay(2000);
   
   Tft.setColor(0,0,0);
   Tft.fillRect(1,15,318,224);
@@ -246,7 +245,7 @@ void loop()
     Tft.drawCircle(x, y, r);
   }
 
-  delay(2000);
+  //delay(2000);
   
   Tft.setColor(0,0,0);
   Tft.fillRect(1,15,318,224);
@@ -262,7 +261,7 @@ void loop()
     Tft.drawRect(x, y, x2, y2);
   }
 
-  delay(2000);
+  //delay(2000);
   
   Tft.setColor(0,0,0);
   Tft.fillRect(1,15,318,224);
@@ -278,7 +277,7 @@ void loop()
     Tft.drawRoundRect(x, y, x2, y2);
   }
 
-  delay(2000);
+  //delay(2000);
   
   Tft.setColor(0,0,0);
   Tft.fillRect(1,15,318,224);
@@ -293,7 +292,7 @@ void loop()
     Tft.drawLine(x, y, x2, y2);
   }
 
-  delay(2000);
+  //delay(2000);
   
   Tft.setColor(0,0,0);
   Tft.fillRect(1,15,318,224);
@@ -304,9 +303,10 @@ void loop()
     Tft.drawPixel(2+random(316), 16+random(209));
   }
 
-  delay(2000);
+  //delay(2000);
 
   Tft.fillScr(0, 0, 255);
+  
   Tft.setColor(255, 0, 0);
   Tft.fillRoundRect(80, 70, 239, 169);
   
@@ -320,6 +320,12 @@ void loop()
   Tft.setBackColor(0, 0, 255);
   Tft.print("Runtime: (msecs)", CENTER, 210);
   Tft.printNumI(millis(), CENTER, 225);
+  
+  Tft.setBackColor(VGA_BLACK);
+  for(byte i=0; i<15;i++) {
+    Tft.scroll(16,50,50,250,200);
+    delay(200);
+  }
   
   delay (10000);
 }

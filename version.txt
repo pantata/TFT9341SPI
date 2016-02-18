@@ -3,3 +3,5 @@ Version:
 	1.1 	16.08.2014 - performance improvements
 	1.2 	05.01.2015  - added function setRotation setRotation - allow rotate display 
 	1.3     28.01.2016 - basic Arduino M0 compatibility
+	2.0beta 18.02.2016 - Arduino M0 DMA SPI, fix rotation, 
+			      added vertical scroll, performance improvements

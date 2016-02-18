@@ -14,18 +14,19 @@
 #define TFT9341_h
 
 #include "Arduino.h"
+#include "SPI.h"
 
-#define SPISPEED 20000000
+//#define SPISPEED 20000000
 
 #if defined(__AVR__)
 	#define SPI_MODE_FAST
-#elif defined(__arm__)
-     #define SPI_MODE_FAST     
-     //#define SPI_MODE_DMA
+#elif defined(__arm__)     
+     #define SPI_MODE_DMA
 #endif
 
+
 #define UTFT_VERSION 300
-#define VERSION9341 15
+#define VERSION9341 100
 
 #define LEFT 1
 #define RIGHT 9999
@@ -41,17 +42,20 @@
 	#define RESET 33
 	#define DC 47
 	#define LED 46	
-#elif defined(__arm__)
-	#define CS 13
-	#define RESET 12
-	#define DC 11	
-	#define LED 10	
-#else
+#elif defined(__SAMD21G18A__)
+	#define CS 12
+	#define RESET 11
+	#define DC 10	
+	#define LED 9	
+#elif defined(__ATmega328__)
 	#define CS 4
 	#define RESET 5
 	#define DC 6	
 	#define LED 7	
 #endif
+
+#define TFT_WIDTH 240
+#define TFT_HEIGHT 320
 
 //*********************************
 // COLORS
@@ -75,7 +79,7 @@
 #define VGA_PURPLE		0x8010
 #define VGA_TRANSPARENT	0xFFFFFFFF
 
-// Color definitions
+// All Color definitions
 #define ILI9341_ALICEBLUE 0xF7DF 
 #define ILI9341_ANTIQUEWHITE 0xFF5A 
 #define ILI9341_AQUA 0x07FF 
@@ -217,15 +221,71 @@
 #define ILI9341_YELLOW 0xFFE0 
 #define ILI9341_YELLOWGREEN 0x9E66
 
+//commands
+#define ILI9341_VSCRDEF 0x33
+#define ILI9341_VSCRSADD 0x37
 
-#ifndef INT8U
-#define INT8U unsigned char
-#endif
-#ifndef INT16U
-#define INT16U unsigned int
-#endif
+#define NOP     0x00
+#define SWRESET 0x01
+#define RDDID   0x04
+#define RDDST   0x09
 
-#define bitmapdatatype unsigned int*
+#define SLPIN   0x10
+#define SLPOUT  0x11
+#define PTLON   0x12
+#define NORON   0x13
+
+#define RDMODE  0x0A
+#define RDMADCTL  0x0B
+#define RDPIXFMT  0x0C
+#define RDIMGFMT  0x0A
+#define RDSELFDIAG  0x0F
+
+#define INVOFF  0x20
+#define INVON   0x21
+#define GAMMASET 0x26
+#define DISPOFF 0x28
+#define DISPON  0x29
+
+#define CASET   0x2A
+#define PASET   0x2B
+#define RAMWR   0x2C
+#define RAMRD   0x2E
+
+#define PTLAR   0x30
+#define MADCTL  0x36
+#define MADCTL_MY  0x80
+#define MADCTL_MX  0x40
+#define MADCTL_MV  0x20
+#define MADCTL_ML  0x10
+#define MADCTL_RGB 0x00
+#define MADCTL_BGR 0x08
+#define MADCTL_MH  0x04
+
+#define PIXFMT  0x3A
+
+#define FRMCTR1 0xB1
+#define FRMCTR2 0xB2
+#define FRMCTR3 0xB3
+#define INVCTR  0xB4
+#define DFUNCTR 0xB6
+
+#define PWCTR1  0xC0
+#define PWCTR2  0xC1
+#define PWCTR3  0xC2
+#define PWCTR4  0xC3
+#define PWCTR5  0xC4
+#define VMCTR1  0xC5
+#define VMCTR2  0xC7
+
+#define RDID1   0xDA
+#define RDID2   0xDB
+#define RDID3   0xDC
+#define RDID4   0xDD
+
+#define GMCTRP1 0xE0
+#define GMCTRN1 0xE1
+
 #define swap(type, i, j) {type t = i; i = j; j = t;}
 #define fontbyte(x) pgm_read_byte(&cfont.font[x])
 
@@ -238,57 +298,94 @@ struct _current_font
 	uint8_t numchars;
 };
 
-
+class propFont
+{
+    public:
+        byte charCode;
+        int adjYOffset;
+        int width;
+        int height;
+        int xOffset;
+        int xDelta;
+        byte* dataPtr;
+};
 
 class TFT9341
 {
 	public:	
 		TFT9341();
 		void InitLCD(byte orientation=LANDSCAPE);
+		void setRotation(uint8_t m);
+		int  getDisplayXSize();
+		int	 getDisplayYSize();
+				
 		void clrScr();
+		void drawRect(int x1, int y1, int x2, int y2);
+		
 		void drawPixel(int x, int y);
 		void drawLine(int x1, int y1, int x2, int y2);
-		void fillScr(byte r, byte g, byte b);
-		void fillScr(word color);
-		void drawRect(int x1, int y1, int x2, int y2);
-        void fillRect(int x1, int y1, int x2, int y2);
-
+		
+		void setColor(uint8_t r, uint8_t g, uint8_t b);
+		void setColor(word color);		
+		uint16_t getColor();
+		void setBackColor(uint8_t r, uint8_t g, uint8_t b);
+		void setBackColor(uint32_t color);
+		uint16_t getBackColor();
+		
+		void fillScr(uint8_t r, uint8_t g, uint8_t b);
+		void fillScr(uint16_t color);	
+		void fillRect(int x1, int y1, int x2, int y2);		
+		
         void drawRoundRect(int x1, int y1, int x2, int y2);
-        void fillRoundRect(int x1, int y1, int x2, int y2);
+        void fillRoundRect(int x1, int y1, int x2, int y2);		
+        
 		void drawCircle(int x, int y, int radius);
 		void fillCircle(int x, int y, int radius);
-
-		void setColor(byte r, byte g, byte b);
-		void setColor(word color);
-		word getColor();
-		void setBackColor(byte r, byte g, byte b);
-		void setBackColor(uint32_t color);
-		word getBackColor();
-		void print(char *st, int x, int y, int deg=0);
-		void printC(String st, int x, int y, uint32_t color=VGA_WHITE);
-		void print(String st, int x, int y, int deg=0);
-		void rotateChar(byte c, int x, int y, int pos, int deg);
-		void printNumI(long num, int x, int y, int length=0, char filler=' ');
-		void printNumF(double num, byte dec, int x, int y, char divider='.', int length=0, char filler=' ');
+		
 		void setFont(uint8_t* font);
 		uint8_t* getFont();
 		uint8_t getFontXsize();
 		uint8_t getFontYsize();
-		void drawBitmap(int x, int y, int sx, int sy, bitmapdatatype data, int scale=1);
-		void drawBitmap(int x, int y, int sx, int sy, bitmapdatatype data, int deg, int rox, int roy);
+		
 		void lcdOff();
-		void lcdOn();
-        void setRotation(uint8_t m);
-		//void setContrast(char c);
-		int  getDisplayXSize();
-		int	 getDisplayYSize();
+		void lcdOn();	
+		void print(String st, int x, int y, int deg=0);		
+		void print(char *st, int x, int y, int deg=0);
+
+		void rotateChar(byte c, int x, int y, int pos, int deg);
+		void printNumI(long num, int x, int y, int length=0, char filler=' ');        
+		
+	    //prop font
+	    int getStringWidth(char* str);
+      	int getFontHeight();
+      	byte getOrientation();
+      	
+      	//
+      	void scroll(uint8_t lh, int16_t x1, int16_t y1, int16_t x2, int16_t y2);
+
+/*						
 		void	drawTriangle(int x1, int y1, int x2, int y2, int x3, int y3);
 		void	fillTriangle(int x1, int y1, int x2, int y2, int x3, int y3);
 		void	drawArc(int x, int y, int r, int startAngle, int endAngle, int thickness = 1);
 		void	drawPie(int x, int y, int r, int startAngle, int endAngle);
         void    fillPie(int x, int y, int r, int startAngle, int endAngle);
-		
 
+
+
+		
+		void printNumF(double num, byte dec, int x, int y, char divider='.', int length=0, char filler=' ');
+		
+		
+		void drawBitmap(int x, int y, int sx, int sy, bitmapdatatype data, int scale=1);
+		void drawBitmap(int x, int y, int sx, int sy, bitmapdatatype data, int deg, int rox, int roy);
+		        
+	   	//void setContrast(char c);
+
+        //hardware vertical scoll
+      	void setupScrollArea(uint16_t TFA, uint16_t BFA);  
+   	  	void scrollAddress(uint16_t VSP);
+*/   	  	
+	
 /*
 	The functions and variables below should not normally be used.
 	They have been left publicly available for use in add-on libraries
@@ -297,38 +394,44 @@ class TFT9341
 	Please note that these functions and variables are not documented
 	and I do not provide support on how to use them.
 */
-		byte __p1, __p2, __p3, __p4;
+
 		byte fch, fcl, bch, bcl;
 		byte orient;
 		long disp_x_size, disp_y_size;
-		//byte display_model, display_transfer_mode, display_serial_mode;
-		//regtype *P_RS, *P_WR, *P_CS, *P_RST, *P_SDA, *P_SCL, *P_ALE;
-		//regsize B_RS, B_WR, B_CS, B_RST, B_SDA, B_SCL, B_ALE;
 		_current_font	cfont;
 		boolean _transparent;
         uint8_t rotation;
-
-		//void LCD_Writ_Bus(char VH,char VL, byte mode);
-		void LCD_Write_COM(char VL);
-		void LCD_Write_DATA(char VH,char VL);
-		void LCD_Write_DATA(char VL);
-		void LCD_Write_COM_DATA(char com1,int dat1);
-		void setPixel(word color);
-		void drawHLine(int x, int y, int l);
-		void drawVLine(int x, int y, int l);
-		void printChar(byte c, int x, int y);
+        uint16_t scanline[320];
+        uint16_t _fgc, _bgc;
+        
 		void setXY(word x1, word y1, word x2, word y2);
+		void drawHLine(int x, int y, int l);
+		void drawVLine(int x, int y, int l);		
+		void setPixel(uint16_t color);
+		void printChar(byte c, int x, int y);
+/*
+
+		
+
 		void clrXY();
 		void _convert_float(char *buf, double num, int width, byte prec);
-        void sendCMD(INT8U VL);
-        void WRITE_DATA(INT8U VL);
-        void WRITE_Package(INT16U *data, INT8U howmany);
-        void sendData(INT16U data);
-        INT8U readID(void);
-    INT8U Read_Register(INT8U Addr, INT8U xParameter);
+    
+    	void readRect(int16_t x, int16_t y, int16_t w, int16_t h, uint8_t *pcolors);
+   		void writeRect(int16_t x, int16_t y, int16_t w, int16_t h, const uint8_t *pcolors);
+   	   		
+		static uint16_t color565(uint8_t r, uint8_t g, uint8_t b) {	
+			return ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3);
+		}        
+*/  	
+	protected:
+     int printProportionalChar(byte c, int x, int y);
+	 int rotatePropChar(byte c, int x, int y, int offset, int deg);
+		
+   private:
+      bool getCharPtr(byte c, propFont& font);		
+  
 };
 
 extern TFT9341 Tft;
-
 
 #endif

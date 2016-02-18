@@ -23,32 +23,17 @@ TFT9341 myGLCD;
 void setup()
 {
   myGLCD.InitLCD();
-  myGLCD.setRotation(2);
+  myGLCD.setRotation(0);
   myGLCD.clrScr();
+  myGLCD.setColor(0, 255, 0);
+  myGLCD.setBackColor(0, 0, 0);
+  myGLCD.setFont(BigFont);
+  myGLCD.print(" !\"#$%&'()*+,-./", CENTER, 0);
+  
 }
 
 void loop()
 {
-  myGLCD.setColor(0, 255, 0);
-  myGLCD.setBackColor(0, 0, 0);
-
-  myGLCD.setFont(BigFont);
-  myGLCD.print(" !\"#$%&'()*+,-./", CENTER, 0);
-  myGLCD.print("0123456789:;<=>?", CENTER, 16);
-  myGLCD.print("@ABCDEFGHIJKLMNO", CENTER, 32);
-  myGLCD.print("PQRSTUVWXYZ[\\]^_", CENTER, 48);
-  myGLCD.print("`abcdefghijklmno", CENTER, 64);
-  myGLCD.print("pqrstuvwxyz{|}~ ", CENTER, 80);
-
-  myGLCD.setFont(SmallFont);
-  myGLCD.print(" !\"#$%&'()*+,-./0123456789:;<=>?", CENTER, 120);
-  myGLCD.print("@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_", CENTER, 132);
-  myGLCD.print("`abcdefghijklmnopqrstuvwxyz{|}~ ", CENTER, 144);
-
-  myGLCD.setFont(SevenSegNumFont);
-  myGLCD.print("0123456789", CENTER, 190);
-
-  while(1) {};
 }
 
 
