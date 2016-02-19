@@ -361,21 +361,17 @@ class TFT9341
       	byte getOrientation();
       	
       	//
-      	void scroll(uint8_t lh, int16_t x1, int16_t y1, int16_t x2, int16_t y2);
+    	//void readRect(int16_t x, int16_t y, int16_t w, int16_t h, uint8_t *pcolors);
+   		//void writeRect(int16_t x, int16_t y, int16_t w, int16_t h, const uint8_t *pcolors);
+      	
 
 /*						
 		void	drawTriangle(int x1, int y1, int x2, int y2, int x3, int y3);
 		void	fillTriangle(int x1, int y1, int x2, int y2, int x3, int y3);
 		void	drawArc(int x, int y, int r, int startAngle, int endAngle, int thickness = 1);
 		void	drawPie(int x, int y, int r, int startAngle, int endAngle);
-        void    fillPie(int x, int y, int r, int startAngle, int endAngle);
-
-
-
-		
-		void printNumF(double num, byte dec, int x, int y, char divider='.', int length=0, char filler=' ');
-		
-		
+        void    fillPie(int x, int y, int r, int startAngle, int endAngle);		
+		void printNumF(double num, byte dec, int x, int y, char divider='.', int length=0, char filler=' ');				
 		void drawBitmap(int x, int y, int sx, int sy, bitmapdatatype data, int scale=1);
 		void drawBitmap(int x, int y, int sx, int sy, bitmapdatatype data, int deg, int rox, int roy);
 		        
@@ -384,51 +380,35 @@ class TFT9341
         //hardware vertical scoll
       	void setupScrollArea(uint16_t TFA, uint16_t BFA);  
    	  	void scrollAddress(uint16_t VSP);
-*/   	  	
-	
-/*
-	The functions and variables below should not normally be used.
-	They have been left publicly available for use in add-on libraries
-	that might need access to the lower level functions of UTFT.
-
-	Please note that these functions and variables are not documented
-	and I do not provide support on how to use them.
-*/
-
+		void _convert_float(char *buf, double num, int width, byte prec);   	   		
+*/	
+	protected:
+		int printProportionalChar(byte c, int x, int y);
+		int rotatePropChar(byte c, int x, int y, int offset, int deg);
+		
+   private:
+		bool getCharPtr(byte c, propFont& font);
 		byte fch, fcl, bch, bcl;
 		byte orient;
 		long disp_x_size, disp_y_size;
 		_current_font	cfont;
 		boolean _transparent;
-        uint8_t rotation;
-        uint16_t scanline[320];
-        uint16_t _fgc, _bgc;
-        
+		uint8_t rotation;
+		uint16_t scanline[320];
+		uint16_t _fgc, _bgc;
+
 		void setXY(word x1, word y1, word x2, word y2);
 		void drawHLine(int x, int y, int l);
+		void drawHLine_noCS(int x, int y, int l);
 		void drawVLine(int x, int y, int l);		
+		void drawVLine_noCS(int x, int y, int l);
+		void drawPixel_noCS(int x, int y);
 		void setPixel(uint16_t color);
 		void printChar(byte c, int x, int y);
-/*
-
-		
-
-		void clrXY();
-		void _convert_float(char *buf, double num, int width, byte prec);
-    
-    	void readRect(int16_t x, int16_t y, int16_t w, int16_t h, uint8_t *pcolors);
-   		void writeRect(int16_t x, int16_t y, int16_t w, int16_t h, const uint8_t *pcolors);
-   	   		
+      
 		static uint16_t color565(uint8_t r, uint8_t g, uint8_t b) {	
 			return ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3);
 		}        
-*/  	
-	protected:
-     int printProportionalChar(byte c, int x, int y);
-	 int rotatePropChar(byte c, int x, int y, int offset, int deg);
-		
-   private:
-      bool getCharPtr(byte c, propFont& font);		
   
 };
 

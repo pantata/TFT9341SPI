@@ -10,7 +10,7 @@
 // This program requires the UTFT library.
 //
 
-#include <TFT9341_m0.h>
+#include <TFT9341.h>
 #include <SPI.h>
 
 // Declare which fonts we will be using
@@ -320,12 +320,6 @@ void loop()
   Tft.setBackColor(0, 0, 255);
   Tft.print("Runtime: (msecs)", CENTER, 210);
   Tft.printNumI(millis(), CENTER, 225);
-  
-  Tft.setBackColor(VGA_BLACK);
-  for(byte i=0; i<15;i++) {
-    Tft.scroll(16,50,50,250,200);
-    delay(200);
-  }
   
   delay (10000);
 }
