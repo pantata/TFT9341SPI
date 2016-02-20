@@ -64,4 +64,4 @@ Change notes:
 			      - added vertical scroll, performance improvements
 			      - added proportional fonts from from https://sites.google.com/site/dlbarduino/
 	
-	 
+	2.0beta (20.2.16) - added println, fixes

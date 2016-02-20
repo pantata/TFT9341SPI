@@ -222,7 +222,7 @@ static const uint8_t PROGMEM init_cmd[] = {
 	2, VMCTR2, 0x86, // VCM control2
 	2, MADCTL, 0x48, // Memory Access Control
 	2, PIXFMT, 0x55,
-	3, FRMCTR1, 0x00, 0x18,
+	3, FRMCTR1, 0x00, 0x13, //0x18,
 	4, DFUNCTR, 0x08, 0x82, 0x27, // Display Function Control
 	2, 0xF2, 0x00, // Gamma Function Disable
 	2, GAMMASET, 0x01, // Gamma curve selected
@@ -800,7 +800,7 @@ void TFT9341::printChar(byte c, int x, int y) {
 			temp+=(cfont.x_size/8);
 		}
 	}
-	TFT_CS_HIGH;
+	TFT_CS_HIGH;	
 }
 
 __attribute__((always_inline)) void TFT9341::print(String st, int x, int y, int deg) {
@@ -979,8 +979,7 @@ void TFT9341::print(char *st, int x, int y, int deg) {
 
    int offset = 0;
    for (i=0; i < stl; i++) {
-		if (deg==0)
-      {
+	  if (deg==0) {
         // DLB Added this stuff...
         if (cfont.x_size == 0) {
             x += printProportionalChar(*st++, x, y)+1;
@@ -998,9 +997,68 @@ void TFT9341::print(char *st, int x, int y, int deg) {
    }
 }
 
+void TFT9341::println(char *st, int x, int y) {
+	
+	if (x != 9999) _x = x;
+	if (y != 9999) _y = y;
+	
+	if (_x >= (disp_x_size - cfont.x_size)) {
+		_x = 0;
+	}
+	if (_y >= (disp_y_size - cfont.y_size)) {
+		_y = 0;
+	}	
+	 while (*st) {
+		if (*st == '\n') {
+			_y += cfont.y_size + 1;
+			if (*(st + 1) == '\r') {
+					_x = 0; //??
+					st++;
+			} else {
+					_x += x; //??
+			}
+			st++;
+			continue;
+		} else if (*st == '\r') {
+			st++;
+			continue;
+		}
+		
+		if (_x >= (disp_x_size - cfont.x_size)) {
+			_y += cfont.y_size + 1;
+			_x = 0;
+		}
+		
+		if (_y >= (disp_y_size - cfont.y_size)) {
+			_y = 0;
+			_x = 0;
+		}		
+		
+		if (cfont.x_size == 0) {
+			_x += printProportionalChar(*st++, _x, _y)+1;
+		} else {          
+			printChar(*st++, _x, _y);
+			_x += cfont.x_size;
+		}
+	}
+	_y += cfont.y_size + 1;
+	_x = x;
+}
+
+__attribute__((always_inline)) void TFT9341::println(String st, int x, int y) {
+	char buf[st.length()+1];
+    st.toCharArray(buf, st.length()+1);
+	println(buf, x, y);
+}
+
+__attribute__((always_inline)) void  TFT9341::println(long n, int x, int y) {
+  char buf[25]; 	
+  sprintf(buf, "%ld", n);
+  println(buf,x,y);
+};
+
 // private method to return the Glyph data for an individual character in the ttf font
-bool TFT9341::getCharPtr(byte c, propFont& fontChar)
-{
+bool TFT9341::getCharPtr(byte c, propFont& fontChar) {
     byte* tempPtr = cfont.font + 4; // point at data
     
     do

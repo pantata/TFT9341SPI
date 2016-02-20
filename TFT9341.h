@@ -34,7 +34,8 @@
 
 #define PORTRAIT 0
 #define LANDSCAPE 1
-
+#define PORTRAIT1 2
+#define LANDSCAPE1 3
 
 //pinout defs
 #if defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
@@ -332,6 +333,15 @@ class TFT9341
 		void setBackColor(uint32_t color);
 		uint16_t getBackColor();
 		
+		__attribute__((always_inline)) void setTextColor(uint32_t fg, uint32_t bg) {
+			setColor(fg);setBackColor(bg);
+		};
+		
+		__attribute__((always_inline)) void drawLine(int x1, int y1, int x2, int y2, uint32_t fg) {
+			setColor(fg);
+			drawLine( x1,  y1,  x2,  y2);
+		}; 
+		
 		void fillScr(uint8_t r, uint8_t g, uint8_t b);
 		void fillScr(uint16_t color);	
 		void fillRect(int x1, int y1, int x2, int y2);		
@@ -351,7 +361,10 @@ class TFT9341
 		void lcdOn();	
 		void print(String st, int x, int y, int deg=0);		
 		void print(char *st, int x, int y, int deg=0);
-
+        void println(String st, int x=9999, int y=9999);
+		void println(char *st, int x=9999, int y=9999);        
+        void println(long n, int x=9999, int y=9999);        
+        
 		void rotateChar(byte c, int x, int y, int pos, int deg);
 		void printNumI(long num, int x, int y, int length=0, char filler=' ');        
 		
@@ -396,6 +409,7 @@ class TFT9341
 		uint8_t rotation;
 		uint16_t scanline[320];
 		uint16_t _fgc, _bgc;
+		uint16_t _x, _y;
 
 		void setXY(word x1, word y1, word x2, word y2);
 		void drawHLine(int x, int y, int l);
