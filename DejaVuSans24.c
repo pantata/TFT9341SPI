@@ -21,10 +21,18 @@
 // First Character (Reserved. 0x00)
 // Number Of Characters (Reserved. 0x00)
 
+#if defined(__AVR__)
 #include <avr/pgmspace.h>
+#define fontdatatype const uint8_t
+#elif defined(__PIC32MX__)
+#define PROGMEM
+#define fontdatatype const unsigned char
+#elif defined(__arm__)
+#define PROGMEM
+#define fontdatatype const unsigned char
+#endif
 
-uint8_t DejaVuSans24[] PROGMEM = 
-{
+const fontdatatype DejaVuSans24[] PROGMEM = {
 0x00, 0x17, 0x00, 0x00,
 
 // Individual Character Format:

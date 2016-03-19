@@ -201,7 +201,7 @@
 #define COLOR_WHITESMOKE 0xF7BE 
 #define COLOR_YELLOW 0xFFE0 
 #define COLOR_YELLOWGREEN 0x9E66
-
+#define COLOR_NODEF 0xFFFFFF
 //commands
 #define VSCRDEF 0x33
 #define VSCRSADD 0x37
@@ -302,10 +302,10 @@ public:
     int	 getDisplayYSize();
 				
     void clrScr();
-    void drawRect(int x1, int y1, int x2, int y2, uint16_t color=NULL);
+    void drawRect(int x1, int y1, int x2, int y2, uint16_t color=COLOR_NODEF);
 		
     void drawPixel(int x, int y, uint16_t color=NULL);
-    void drawLine(int x1, int y1, int x2, int y2, uint16_t color=NULL);
+    void drawLine(int x1, int y1, int x2, int y2, uint16_t color=COLOR_NODEF);
 		
     void setColor(uint8_t r, uint8_t g, uint8_t b);
     void setColor(word color);
@@ -331,24 +331,24 @@ public:
      */
     void fillScr(uint16_t color);
     
-    void fillRect(int x1, int y1, int x2, int y2,  uint16_t color=NULL);
+    void fillRect(int x1, int y1, int x2, int y2,  uint16_t color=COLOR_NODEF,  boolean noCS=false);
 		
-    void drawRoundRect(int x1, int y1, int x2, int y2, uint16_t color=NULL);
-    void fillRoundRect(int x1, int y1, int x2, int y2, uint16_t color=NULL);
+    void drawRoundRect(int x1, int y1, int x2, int y2, uint16_t color=COLOR_NODEF);
+    void fillRoundRect(int x1, int y1, int x2, int y2, uint16_t color=COLOR_NODEF);
     /**
      * @desc  Draw circle
      * @param x
      * @param y
      * @param radius
      */
-    void drawCircle(int x, int y, int radius, uint16_t color=NULL);
+    void drawCircle(int x, int y, int radius, uint16_t color=COLOR_NODEF);
     /**
      * @desc  Draw filled circle
      * @param x
      * @param y
      * @param radius
      */
-    void fillCircle(int x, int y, int radius, uint16_t color=NULL);
+    void fillCircle(int x, int y, int radius, uint16_t color=COLOR_NODEF);
     
     /**
      * @desc  set font for next print
