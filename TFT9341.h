@@ -331,7 +331,7 @@ public:
      */
     void fillScr(uint16_t color);
     
-    void fillRect(int x1, int y1, int x2, int y2,  uint16_t color=COLOR_NODEF,  boolean noCS=false);
+    void fillRect(int x1, int y1, int x2, int y2,  uint16_t color=COLOR_NODEF,  boolean setCS = true);
 		
     void drawRoundRect(int x1, int y1, int x2, int y2, uint16_t color=COLOR_NODEF);
     void fillRoundRect(int x1, int y1, int x2, int y2, uint16_t color=COLOR_NODEF);

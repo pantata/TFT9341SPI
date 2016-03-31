@@ -389,8 +389,8 @@ void TFT9341::clrScr() {
     TFT_CS_HIGH;
 }
 
-void TFT9341::drawHLine(int x, int y, int l, uint16_t color) {
-    if (color == NULL) color = _fgc;
+__attribute__((always_inline)) void TFT9341::drawHLine(int x, int y, int l, uint16_t color) {
+    if (color == COLOR_NODEF) color = _fgc;
 	if (l < 0) {
 		l = -l;
 		x -= l;
@@ -399,7 +399,6 @@ void TFT9341::drawHLine(int x, int y, int l, uint16_t color) {
 	for (uint16_t i = 0; i < l; i++) {
 		scanline[i] = (uint8_t(_fgc & 0xFF) <<8 )|( uint8_t(_fgc>>8));
 	}
-
     TFT_CS_LOW;
 	setXY(x, y, x+l, y);
 	wr_comm_last(RAMWR);
@@ -408,7 +407,7 @@ void TFT9341::drawHLine(int x, int y, int l, uint16_t color) {
 }
 
 __attribute__((always_inline)) void TFT9341::drawHLine_noCS(int x, int y, int l, uint16_t color) {
-    if (color == NULL) color = _fgc;
+    if (color == COLOR_NODEF) color = _fgc;
 	if (l < 0) {
 		l = -l;
 		x -= l;
@@ -423,7 +422,7 @@ __attribute__((always_inline)) void TFT9341::drawHLine_noCS(int x, int y, int l,
 }
 
 void TFT9341::drawVLine(int x, int y, int l, uint16_t color) {
-    if (color == NULL) color = _fgc;
+    if (color == COLOR_NODEF) color = _fgc;
 	if (l<0) {
 		l = -l;
 		y -= l;
@@ -440,7 +439,7 @@ void TFT9341::drawVLine(int x, int y, int l, uint16_t color) {
 }
 
 __attribute__((always_inline)) void TFT9341::drawVLine_noCS(int x, int y, int l, uint16_t color) {
-    if (color == NULL) color = _fgc;
+    if (color == COLOR_NODEF) color = _fgc;
 	if (l<0) {
 		l = -l;
 		y -= l;
@@ -472,7 +471,7 @@ void TFT9341::drawRect(int x1, int y1, int x2, int y2, uint16_t color) {
 }
 
 __attribute__((always_inline)) void TFT9341::drawPixel(int x, int y, uint16_t color) {
-    if (color == NULL) color = _fgc;
+    if (color == COLOR_NODEF) color = _fgc;
 	TFT_CS_LOW;
 	setXY(x, y, x, y);
 	wr_comm_last(RAMWR);
@@ -482,7 +481,7 @@ __attribute__((always_inline)) void TFT9341::drawPixel(int x, int y, uint16_t co
 }
 
 __attribute__((always_inline)) void TFT9341::drawPixel_noCS(int x, int y, uint16_t color) {
-    if (color == NULL) color = _fgc;
+    if (color == COLOR_NODEF) color = _fgc;
 	setXY(x, y, x, y);
 	wr_comm_last(RAMWR);
 	uint16_t fg = (uint8_t(color & 0xFF) <<8 )|( uint8_t(color>>8));
@@ -598,7 +597,7 @@ void TFT9341::fillScr(uint16_t color) {
     TFT_CS_HIGH;
 }
 
-void TFT9341::fillRect(int x1, int y1, int x2, int y2, uint16_t color,boolean noCS) {
+void TFT9341::fillRect(int x1, int y1, int x2, int y2, uint16_t color, boolean setCS) {
     if (color == COLOR_NODEF) color = _fgc;
 	if (x1>x2) {
 		swap(int, x1, x2);
@@ -617,7 +616,7 @@ void TFT9341::fillRect(int x1, int y1, int x2, int y2, uint16_t color,boolean no
 		scanline[i] = (uint8_t(color & 0xFF) <<8 )|( uint8_t(color>>8));
 	}	
 
-	if (!noCS) TFT_CS_LOW;
+	if (setCS) TFT_CS_LOW;
 	setXY(x1,y1,x2,y2);	
 	wr_comm_last(RAMWR);
 	
@@ -631,7 +630,7 @@ void TFT9341::fillRect(int x1, int y1, int x2, int y2, uint16_t color,boolean no
 		uint16_t rpx = pxcnt % SCANLINES;
 		if (rpx > 0) spi_write(scanline,rpx*2);
 	}
-	if (!noCS) TFT_CS_HIGH;
+	if (setCS) TFT_CS_HIGH;
 }
 
 void TFT9341::drawRoundRect(int x1, int y1, int x2, int y2, uint16_t color) {
@@ -763,6 +762,7 @@ uint8_t* TFT9341::getFont() {
 
 uint8_t TFT9341::getFontXsize() {
 	return cfont.x_size;
+        
 }
 
 uint8_t TFT9341::getFontYsize() {
@@ -950,10 +950,12 @@ int TFT9341::printProportionalChar(byte c, int x, int y) {
     int fontHeight = cfont.y_size;
     int fontWidth = fontChar.xDelta;
     uint32_t pxcnt = fontHeight * fontWidth;
+    uint16_t px = 0;
     
+    TFT_CS_LOW;
+    setXY(x, y, x+fontWidth, y+fontHeight);
+    wr_comm_last(RAMWR);
     
-    
-
     if (pxcnt < SCANLINES) { //small font
         for (uint16_t i = 0; i < pxcnt; i++ ) {
             scanline[i] = (uint8_t(_bgc & 0xFF) <<8 )|( uint8_t(_bgc>>8));
@@ -967,20 +969,18 @@ int TFT9341::printProportionalChar(byte c, int x, int y) {
                         ch = pgm_read_byte(tempPtr++);
                     }
                     if ((ch & mask) !=0) {
-                        scanline[fontChar.xOffset+((fontWidth+1)*fontChar.adjYOffset)+(j*(fontWidth+1))+i] = (uint8_t(_fgc & 0xFF) <<8 )|( uint8_t(_fgc>>8));
+                        px = (fontChar.xOffset+((fontWidth+1)*fontChar.adjYOffset)+(j*(fontWidth+1))+i);
+                        scanline[px] = (uint8_t(_fgc & 0xFF) <<8 )|( uint8_t(_fgc>>8));
                     }
                     mask >>= 1;
                 }
             }
         }
-        TFT_CS_LOW;
-        setXY(x, y, x+fontWidth, y+fontHeight);
-        wr_comm_last(RAMWR);
         spi_write(scanline,pxcnt*2);
         
     } else { //TODO: big font - very slow, need optim.
-        TFT_CS_LOW;
-        fillRect(x, y, x + fontChar.xDelta+1, y + fontHeight, _bgc, true);
+      
+        fillRect(x, y, x + fontChar.xDelta+1, y + fontHeight, _bgc, false);
         if (fontChar.width != 0) {
             byte mask = 0x80;
             for (j=0; j < fontChar.height; j++) {

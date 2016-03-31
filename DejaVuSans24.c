@@ -32,7 +32,7 @@
 #define fontdatatype const unsigned char
 #endif
 
-const fontdatatype DejaVuSans24[] PROGMEM = {
+fontdatatype DejaVuSans24[] PROGMEM = {
 0x00, 0x17, 0x00, 0x00,
 
 // Individual Character Format:
