@@ -285,10 +285,13 @@ void TFT9341::InitLCD(uint8_t orientation) {
     
     TFT_BL_ON;
 	SPI.begin();
+
+#if defined(__SAMD21G18A__)
 	SPI.setBitOrder(MSBFIRST);
 	SPI.setDataMode(SPI_MODE0);	
-	SPI.setClockDivider(2);		
+	SPI.setClockDivider(2);
 	dma_init();
+#endif
 	
 	//reset
 	TFT_CS_HIGH;
@@ -298,7 +301,7 @@ void TFT9341::InitLCD(uint8_t orientation) {
 	TFT_RST_ON;
 	delay(50);
 	TFT_RST_OFF;
-    delay(100);
+    delay(200);
     
     //init commands & values
     const uint8_t *adr = init_cmd;
@@ -312,7 +315,7 @@ void TFT9341::InitLCD(uint8_t orientation) {
 		}
 	}
 	wr_comm_first(0x11);
-	delay(150);
+	delay(200);
 	write8_cont(0x29);
 	write8_cont(0x2c);	
 	TFT_CS_HIGH;		

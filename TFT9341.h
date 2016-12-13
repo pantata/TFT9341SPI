@@ -28,11 +28,18 @@
     #define RESET 11
     #define DC 10
     #define LED 9
-#elif defined(__ATmega328__)
+#else  //elif defined(__ATmega328__)
+
+    #define RESET  10
+    #define CS     8
+    #define DC     9
+    #define LED    7
+/*
     #define CS 4
     #define RESET 5
     #define DC 6
     #define LED 7
+*/
 #endif
 
 /*
