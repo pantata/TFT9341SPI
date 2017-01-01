@@ -208,7 +208,8 @@
 #define COLOR_WHITESMOKE 0xF7BE 
 #define COLOR_YELLOW 0xFFE0 
 #define COLOR_YELLOWGREEN 0x9E66
-#define COLOR_NODEF 0xFFFFFF
+
+#define COLOR_NODEF NULL
 //commands
 #define VSCRDEF 0x33
 #define VSCRSADD 0x37
@@ -498,7 +499,7 @@ public:
     uint16_t _ymin = 0;
     uint16_t _xmax, _ymax ;
 
-    void setXY(word x1, word y1, word x2, word y2);
+    void setXY(int x1, int y1, int x2, int y2);
     void drawHLine(int x, int y, int l, uint16_t color = NULL);
     void drawHLine_noCS(int x, int y, int l,uint16_t color = NULL);
     void drawVLine(int x, int y, int l, uint16_t color = NULL);

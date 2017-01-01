@@ -369,7 +369,7 @@ int	 TFT9341::getDisplayYSize() {
 	return disp_y_size;
 }
 		
-void TFT9341::setXY(word x1, word y1, word x2, word y2) {
+void TFT9341::setXY(int x1, int y1, int x2, int y2) {
     uint8_t x[] = {x1>>8,x1,x2>>8,x2};
     uint8_t y[] = {y1>>8,y1,y2>>8,y2};
     
