@@ -12,7 +12,7 @@
 #include <pins_arduino.h>
 #include <SPI.h>
 
-#if defined(__SAMD21G18A__)
+#if defined(__arm__)
 	/*
 	 * DMA
 	 *  
@@ -56,6 +56,7 @@
 		PM->AHBMASK.reg |= PM_AHBMASK_DMAC ;
 		PM->APBBMASK.reg |= PM_APBBMASK_DMAC ;
 		NVIC_EnableIRQ( DMAC_IRQn ) ;
+		NVIC_SetPriority( DMAC_IRQn, 5 ) ;
 
 		DMAC->BASEADDR.reg = (uint32_t)descriptor_section;
 		DMAC->WRBADDR.reg = (uint32_t)wrb;
@@ -63,7 +64,7 @@
 	}
 
 
-	Sercom *sercom = (Sercom   *)SERCOM4;  // SPI SERCOM
+	Sercom *sercom = (Sercom   *)SERCOM3;  // SPI SERCOM
 
 	void spi_xfr(void *txdata, void *rxdata,  size_t n) {
 		uint32_t temp_CHCTRLB_reg;
@@ -74,9 +75,10 @@
 		DMAC->CHCTRLA.reg = DMAC_CHCTRLA_SWRST;
 		DMAC->SWTRIGCTRL.reg &= (uint32_t)(~(1 << chnltx));
 		temp_CHCTRLB_reg = DMAC_CHCTRLB_LVL(0) | 
-		  DMAC_CHCTRLB_TRIGSRC(SERCOM4_DMAC_ID_TX) | DMAC_CHCTRLB_TRIGACT_BEAT;
+		  DMAC_CHCTRLB_TRIGSRC(SERCOM3_DMAC_ID_TX) | DMAC_CHCTRLB_TRIGACT_BEAT;
 		DMAC->CHCTRLB.reg = temp_CHCTRLB_reg;
 		DMAC->CHINTENSET.reg = DMAC_CHINTENSET_MASK ; // enable all 3 interrupts
+		dmadone = 0;
 		descriptor.descaddr = 0;
 		descriptor.dstaddr = (uint32_t) &sercom->SPI.DATA.reg;
 		descriptor.btcnt =  n;
@@ -89,14 +91,14 @@
 		memcpy(&descriptor_section[chnltx],&descriptor, sizeof(dmacdescriptor));
 
 		// rx channel    enable interrupts
-		DMAC->CHID.reg = DMAC_CHID_ID(chnlrx); 
+ 		DMAC->CHID.reg = DMAC_CHID_ID(chnlrx); 
 		DMAC->CHCTRLA.reg &= ~DMAC_CHCTRLA_ENABLE;
 		DMAC->CHCTRLA.reg = DMAC_CHCTRLA_SWRST;
 		DMAC->SWTRIGCTRL.reg &= (uint32_t)(~(1 << chnlrx));
 		temp_CHCTRLB_reg = DMAC_CHCTRLB_LVL(0) | 
-		  DMAC_CHCTRLB_TRIGSRC(SERCOM4_DMAC_ID_RX) | DMAC_CHCTRLB_TRIGACT_BEAT;
+		  DMAC_CHCTRLB_TRIGSRC(SERCOM3_DMAC_ID_RX) | DMAC_CHCTRLB_TRIGACT_BEAT;
 		DMAC->CHCTRLB.reg = temp_CHCTRLB_reg;
-		DMAC->CHINTENSET.reg = DMAC_CHINTENSET_MASK ; // enable all 3 interrupts
+		DMAC->CHINTENSET.reg = DMAC_CHINTENSET_MASK; // DISABLE INTERRUPTS		//DMAC_CHINTENSET_MASK ;  // enable all 3 interrupts
 		dmadone = 0;
 		descriptor.descaddr = 0;
 		descriptor.srcaddr = (uint32_t) &sercom->SPI.DATA.reg;
@@ -119,8 +121,8 @@
 
 		DMAC->CHID.reg = DMAC_CHID_ID(chnltx);   //disable DMA to allow lib SPI 
 		DMAC->CHCTRLA.reg &= ~DMAC_CHCTRLA_ENABLE;
-		DMAC->CHID.reg = DMAC_CHID_ID(chnlrx); 
-		DMAC->CHCTRLA.reg &= ~DMAC_CHCTRLA_ENABLE;
+//		DMAC->CHID.reg = DMAC_CHID_ID(chnlrx); 
+//		DMAC->CHCTRLA.reg &= ~DMAC_CHCTRLA_ENABLE;
 	}
 
 __attribute__((always_inline)) void spi_write(void *data,  size_t n) {
@@ -154,7 +156,7 @@ __attribute__((always_inline))	void spi_write(void *data,  size_t n) {
  * Pin setup
  *
  */
-#if defined(__SAMD21G18A__)
+#if defined(__arm__)
 	
 	#define PINMODE(x,y) pinMode(x,y) 
 	#define SPI_TRANSFER(x) SPI.transfer(x)
@@ -286,7 +288,7 @@ void TFT9341::InitLCD(uint8_t orientation) {
     TFT_BL_ON;
 	SPI.begin();
 
-#if defined(__SAMD21G18A__)
+#if defined(__arm__)
 	SPI.setBitOrder(MSBFIRST);
 	SPI.setDataMode(SPI_MODE0);	
 	SPI.setClockDivider(2);
@@ -601,7 +603,8 @@ void TFT9341::fillScr(uint16_t color) {
 }
 
 void TFT9341::fillRect(int x1, int y1, int x2, int y2, uint16_t color, boolean setCS) {
-    if (color == COLOR_NODEF) color = _fgc;
+	if(color == COLOR_BLACK) color = COLOR_BLACK;
+    else if (color == COLOR_NODEF) color = _fgc;
 	if (x1>x2) {
 		swap(int, x1, x2);
 	}
@@ -947,21 +950,24 @@ int TFT9341::printProportionalChar(byte c, int x, int y) {
     if (!getCharPtr(c, fontChar)) {
         return 0;
     }
-    
+	    
     tempPtr = fontChar.dataPtr;
     
     int fontHeight = cfont.y_size;
     int fontWidth = fontChar.xDelta;
     uint32_t pxcnt = fontHeight * fontWidth;
     uint16_t px = 0;
+	uint16_t fgCol = (uint8_t(_fgc & 0xFF) <<8 )|( uint8_t(_fgc>>8));
+	uint16_t bgCol = (uint8_t(_bgc & 0xFF) <<8 )|( uint8_t(_bgc>>8));
     
     TFT_CS_LOW;
-    setXY(x, y, x+fontWidth, y+fontHeight);
-    wr_comm_last(RAMWR);
     
     if (pxcnt < SCANLINES) { //small font
+		setXY(x, y, x+fontWidth, y+fontHeight);
+		wr_comm_last(RAMWR);
+		
         for (uint16_t i = 0; i < pxcnt; i++ ) {
-            scanline[i] = (uint8_t(_bgc & 0xFF) <<8 )|( uint8_t(_bgc>>8));
+            scanline[i] = bgCol;
         }
         if (fontChar.width != 0) {
             byte mask = 0x80;
@@ -973,7 +979,7 @@ int TFT9341::printProportionalChar(byte c, int x, int y) {
                     }
                     if ((ch & mask) !=0) {
                         px = (fontChar.xOffset+((fontWidth+1)*fontChar.adjYOffset)+(j*(fontWidth+1))+i);
-                        scanline[px] = (uint8_t(_fgc & 0xFF) <<8 )|( uint8_t(_fgc>>8));
+                        scanline[px] = fgCol;
                     }
                     mask >>= 1;
                 }
@@ -982,26 +988,69 @@ int TFT9341::printProportionalChar(byte c, int x, int y) {
         spi_write(scanline,pxcnt*2);
         
     } else { //TODO: big font - very slow, need optim.
-      
-        fillRect(x, y, x + fontChar.xDelta+1, y + fontHeight, _bgc, false);
+		// fill background
+		// VGA_TRANSPARENT?
+		// word fcolor = getColor();
+		// if (!_transparent)
+		// {
+			// int fontHeight = getFontHeight();
+			// setColor(getBackColor());
+			// fillRect(x, y, x + fontChar.xDelta+1, y + fontHeight);
+			// setColor(fcolor);
+		// }
+        
+		// fillRect(x, y, x + fontChar.xDelta+1, y + fontHeight, _bgc, false);
+		// SerialUSB.print("Width: "); SerialUSB.println(fontWidth);
+		// SerialUSB.print("Height: "); SerialUSB.println(fontHeight);
+		
         if (fontChar.width != 0) {
-            byte mask = 0x80;
-            for (j=0; j < fontChar.height; j++) {
-                for (i=0; i < fontChar.width; i++) {
-                    if (((i + (j*fontChar.width)) % 8) == 0) {
-                        mask = 0x80;
-                        ch = pgm_read_byte(tempPtr++);
-                    }
+			byte mask = 0x00;
+			for (j=0; j < fontHeight; j++) {
+				if((j > fontChar.adjYOffset) && (j <= (fontChar.height + fontChar.adjYOffset))) {
+					for (i=0; i < fontWidth+1; i++) {
+						if((i >= fontChar.xOffset) && (i < (fontChar.width + fontChar.xOffset))) {
+							if(mask == 0) {
+								mask = 0x80;
+								ch = pgm_read_byte(tempPtr++);
+							}
+							if ((ch & mask) != 0) {
+								// setXY(x+fontChar.xOffset+i, y+j+fontChar.adjYOffset, x+fontChar.xOffset+i, y+j+fontChar.adjYOffset);
+								// wr_comm_last(RAMWR); setPixel(_fgc);
+								// drawPixel_noCS(x+fontChar.xOffset+i, y+j+fontChar.adjYOffset, _fgc);
+								scanline[i] = fgCol;
+							}
+							else scanline[i] = bgCol;
+							// else drawPixel_noCS(x+fontChar.xOffset+i, y+j+fontChar.adjYOffset, _bgc);
+							mask >>= 1;
+						}
+						else scanline[i] = bgCol;
+					}
+				}
+				else {
+					for (uint16_t i = 0; i < fontWidth+1; i++ ) {
+						scanline[i] = bgCol;
+					}					
+				}
+				setXY(x, y+j, x+fontWidth+1, y+j);
+				wr_comm_last(RAMWR);
+				spi_write(scanline,((fontWidth+1) * 2));
+			}
+            // byte mask = 0x80;
+            // for (j=0; j < fontChar.height; j++) {
+                // for (i=0; i < fontChar.width; i++) {
+                    // if (((i + (j*fontChar.width)) % 8) == 0) {
+                        // mask = 0x80;
+                        // ch = pgm_read_byte(tempPtr++);
+                    // }
                     
-                    if ((ch & mask) !=0) {
-                        setXY(x+fontChar.xOffset+i, y+j+fontChar.adjYOffset,
-                              x+fontChar.xOffset+i, y+j+fontChar.adjYOffset);
-                        wr_comm_last(RAMWR);
-                        setPixel(_fgc);
-                    }
-                    mask >>= 1;
-                }
-            }
+                    // if ((ch & mask) !=0) {
+                        // setXY(x+fontChar.xOffset+i, y+j+fontChar.adjYOffset, x+fontChar.xOffset+i, y+j+fontChar.adjYOffset);
+                        // wr_comm_last(RAMWR);
+                        // setPixel(_fgc);
+                    // }
+                    // mask >>= 1;
+                // }
+            // }
         }
     }
     TFT_CS_HIGH;
