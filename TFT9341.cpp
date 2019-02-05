@@ -987,21 +987,8 @@ int TFT9341::printProportionalChar(byte c, int x, int y) {
         }
         spi_write(scanline,pxcnt*2);
         
-    } else { //TODO: big font - very slow, need optim.
-		// fill background
-		// VGA_TRANSPARENT?
-		// word fcolor = getColor();
-		// if (!_transparent)
-		// {
-			// int fontHeight = getFontHeight();
-			// setColor(getBackColor());
-			// fillRect(x, y, x + fontChar.xDelta+1, y + fontHeight);
-			// setColor(fcolor);
-		// }
-        
-		// fillRect(x, y, x + fontChar.xDelta+1, y + fontHeight, _bgc, false);
-		// SerialUSB.print("Width: "); SerialUSB.println(fontWidth);
-		// SerialUSB.print("Height: "); SerialUSB.println(fontHeight);
+    } else {     //Large font    
+		// fillRect(x, y, x + fontChar.xDelta+1, y + fontHeight, _bgc, false);			//Fill background while filling scanlines
 		
         if (fontChar.width != 0) {
 			byte mask = 0x00;
@@ -1017,9 +1004,9 @@ int TFT9341::printProportionalChar(byte c, int x, int y) {
 								// setXY(x+fontChar.xOffset+i, y+j+fontChar.adjYOffset, x+fontChar.xOffset+i, y+j+fontChar.adjYOffset);
 								// wr_comm_last(RAMWR); setPixel(_fgc);
 								// drawPixel_noCS(x+fontChar.xOffset+i, y+j+fontChar.adjYOffset, _fgc);
-								scanline[i] = fgCol;
+								scanline[i] = fgCol;									//Use the scanline buffer as a single character scanline buf
 							}
-							else scanline[i] = bgCol;
+							else scanline[i] = bgCol;									//And for the background color as well
 							// else drawPixel_noCS(x+fontChar.xOffset+i, y+j+fontChar.adjYOffset, _bgc);
 							mask >>= 1;
 						}
@@ -1033,7 +1020,7 @@ int TFT9341::printProportionalChar(byte c, int x, int y) {
 				}
 				setXY(x, y+j, x+fontWidth+1, y+j);
 				wr_comm_last(RAMWR);
-				spi_write(scanline,((fontWidth+1) * 2));
+				spi_write(scanline,((fontWidth+1) * 2));								//Write the character scanline fast
 			}
             // byte mask = 0x80;
             // for (j=0; j < fontChar.height; j++) {
