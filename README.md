@@ -65,3 +65,5 @@ Change notes:
 			      - added proportional fonts from from https://sites.google.com/site/dlbarduino/
 	
 	2.0beta (20.2.16) - added println, fixes
+	
+	2.0beta (5.2.19) - added large TTF font fast printing
