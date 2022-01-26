@@ -990,7 +990,7 @@ int TFT9341::printProportionalChar(byte c, int x, int y) {
     } else {     //Large font    
 		// fillRect(x, y, x + fontChar.xDelta+1, y + fontHeight, _bgc, false);			//Fill background while filling scanlines
 		
-        if (fontChar.width != 0) {
+        // if (fontChar.width != 0) {
 			byte mask = 0x00;
 			for (j=0; j < fontHeight; j++) {
 				if((j > fontChar.adjYOffset) && (j <= (fontChar.height + fontChar.adjYOffset))) {
@@ -1038,7 +1038,7 @@ int TFT9341::printProportionalChar(byte c, int x, int y) {
                     // mask >>= 1;
                 // }
             // }
-        }
+        // }
     }
     TFT_CS_HIGH;
     return fontChar.xDelta;
