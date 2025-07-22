@@ -143,11 +143,14 @@ __attribute__((always_inline))	void spi_transfer(void *txdata, void *rxdata,  si
 #elif defined(__AVR__)
 
 __attribute__((always_inline))	void spi_write(void *data,  size_t n) {	
-		byte c;
+	/*
+	byte c;
 		uint16_t i = 0;	
 		while(n--)			
 			SPI.transfer(*((byte*)data+i));
 			i++;
+	*/
+	SPI.transfer(data, n);
 	}	
 	
 #endif
@@ -252,9 +255,7 @@ inline __attribute__((always_inline)) void wr_comm_first(uint8_t c) {
  * set DC for data
  */ 
 inline __attribute__((always_inline)) void wr_comm_last(uint8_t c) {
-		//char ch = c;  
 		TFT_DC_LOW;
-		//spi_write(&ch,1);
 		SPI.transfer(c);
 		TFT_DC_HIGH;
 }
@@ -264,16 +265,11 @@ inline __attribute__((always_inline)) void wr_comm_last(uint8_t c) {
  * not disable CS
  */
 inline __attribute__((always_inline)) void write8_cont(uint8_t c) {
-		//char ch = c;  
-		//spi_write(&ch,1);
 		SPI.transfer(c);
 }
 
 inline __attribute__((always_inline)) void write16_cont(uint16_t c) {
-		//char ch = c;  
-		//spi_write(&ch,1);		
-		SPI.transfer(byte(c>>8));
-		SPI.transfer(byte(c & 0xFF));		
+		SPI.transfer16(c);
 }
  
 TFT9341::TFT9341() {}
@@ -303,7 +299,7 @@ void TFT9341::InitLCD(uint8_t orientation) {
 	TFT_RST_ON;
 	delay(50);
 	TFT_RST_OFF;
-    delay(200);
+    delay(20);
     
     //init commands & values
     const uint8_t *adr = init_cmd;
@@ -551,7 +547,7 @@ void TFT9341::setColor(uint8_t r, uint8_t g, uint8_t b) {
 	_fgc = (fch<<8) | fcl;
 }
 
-void TFT9341::setColor(word color) {
+void TFT9341::setColor(uint16_t color) {
 	fch=uint8_t(color>>8);
 	fcl=uint8_t(color & 0xFF);
 	_fgc = color;
@@ -740,7 +736,7 @@ void TFT9341::drawCircle(int x, int y, int radius, uint16_t color) {
 	TFT_CS_HIGH;
 }
 
-__attribute__((always_inline)) void TFT9341::fillCircle(int x, int y, int radius, uint16_t color) {
+__attribute__((always_inline))  void TFT9341::fillCircle(int x, int y, int radius, uint16_t color)   {
     
     if (color == COLOR_NODEF) color = _fgc;
 	TFT_CS_LOW;
@@ -754,8 +750,8 @@ __attribute__((always_inline)) void TFT9341::fillCircle(int x, int y, int radius
 	TFT_CS_HIGH;
 }
 
-void TFT9341::setFont(uint8_t* font) {
-	cfont.font=font;
+void TFT9341::setFont(const unsigned char * font) {
+	cfont.font=(unsigned char*)font;
 	cfont.x_size=fontbyte(0);
 	cfont.y_size=fontbyte(1);
 	cfont.offset=fontbyte(2);
@@ -795,7 +791,7 @@ void TFT9341::printChar(byte c, int x, int y) {
     uint16_t pxcnt = cfont.x_size * cfont.y_size;
     uint16_t px = 0;
     
-    word temp=((c-cfont.offset)*((cfont.x_size/8)*cfont.y_size))+4;
+    uint16_t temp=((c-cfont.offset)*((cfont.x_size/8)*cfont.y_size))+4;
 
   	
 
@@ -897,12 +893,27 @@ void TFT9341::printChar(byte c, int x, int y) {
 
 
 __attribute__((always_inline)) void TFT9341::print(String st, int x, int y, int deg) {
-	char buf[st.length()+1];
+    char buf[st.length()+1];
     st.toCharArray(buf, st.length()+1);
-	print(buf, x, y, deg);
+    print(buf, x, y, deg);
 }
 
-// returns the string width in pixels. Useful for positions strings on the screen.
+void TFT9341::print(const __FlashStringHelper* str, int x, int y, int deg) {
+    PGM_P p = reinterpret_cast<PGM_P>(str);
+    size_t n = 0;
+    while (1) {
+        unsigned char c = pgm_read_byte(p++);
+        if (c == 0) break;
+        n++;
+    }
+    char buf[n + 1];
+    p = reinterpret_cast<PGM_P>(str);
+    for (size_t i = 0; i < n; i++) {
+        buf[i] = pgm_read_byte(p++);
+    }
+    buf[n] = 0;
+    print(buf, x, y, deg);
+}// returns the string width in pixels. Useful for positions strings on the screen.
 int TFT9341::getStringWidth(char* str) {
     char* tempStrptr = str;
     
@@ -943,7 +954,7 @@ byte TFT9341::getOrientation() {
 // print a ttf based character
 int TFT9341::printProportionalChar(byte c, int x, int y) {
 	 byte i,j,ch;
-	 word temp; 
+	 uint16_t temp;
     byte *tempPtr;
 
     propFont fontChar;    
@@ -1053,7 +1064,7 @@ int TFT9341::rotatePropChar(byte c, int x, int y, int offset, int deg) {
    }
 
    byte i,j,ch;
-   word temp; 
+   uint16_t temp;
    byte *tempPtr = fontChar.dataPtr;
 	double radian = deg * 0.0175;  
    
@@ -1108,7 +1119,7 @@ int TFT9341::rotatePropChar(byte c, int x, int y, int offset, int deg) {
 }
 
 
-void TFT9341::print(char *st, int x, int y, int deg) {
+void TFT9341::print(const char *st, int x, int y, int deg) {
 	int stl, i;
 
 	stl = strlen(st);
@@ -1138,7 +1149,7 @@ void TFT9341::print(char *st, int x, int y, int deg) {
    }
 }
 
-void TFT9341::print(char *st) {
+void TFT9341::print(const char *st) {
     
     if ( (_x >= (disp_x_size - cfont.x_size)) || (_x >= (_xmax - cfont.x_size)) ) {
         _x = _xmin;
@@ -1215,7 +1226,7 @@ void TFT9341::setTextArea(int x, int y, int width, int height) {
 
 // private method to return the Glyph data for an individual character in the ttf font
 bool TFT9341::getCharPtr(byte c, propFont& fontChar) {
-    byte* tempPtr = cfont.font + 4; // point at data
+    uint8_t* tempPtr = cfont.font + 4; // point at data
     
     do
     {
@@ -1241,13 +1252,15 @@ bool TFT9341::getCharPtr(byte c, propFont& fontChar) {
     return (fontChar.charCode != 0xFF);
 }
 
-void TFT9341::printNumI(long num, int x, int y, int length, char filler)
+void TFT9341::printNumI(long num, int x, int y, int length, char filler, const unsigned char * font)
 {
 	char buf[25];
 	char st[27];
 	boolean neg=false;
 	int c=0, f=0;
-  
+
+	if (font != NULL) setFont(font);
+
 	if (num==0)
 	{
 		if (length!=0)
@@ -1307,7 +1320,7 @@ void TFT9341::printNumI(long num, int x, int y, int length, char filler)
 void TFT9341::rotateChar(byte c, int x, int y, int pos, int deg)
 {
  	byte i,j,ch;
-	word temp; 
+ 	uint16_t temp;
 	int newx,newy;
 	double radian;
 	radian=deg*0.0175;  

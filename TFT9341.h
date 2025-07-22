@@ -16,6 +16,8 @@
 #include "Arduino.h"
 #include "SPI.h"
 
+class __FlashStringHelper;
+
 
 //pinout defs
 #if defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
@@ -34,6 +36,7 @@
     #define CS     8
     #define DC     9
     #define LED    7
+
 /*
     #define CS 4
     #define RESET 5
@@ -209,7 +212,148 @@
 #define COLOR_YELLOW 0xFFE0 
 #define COLOR_YELLOWGREEN 0x9E66
 
-#define COLOR_NODEF NULL
+#define ILI9341_ALICEBLUE 0xF7DF
+#define ILI9341_ANTIQUEWHITE 0xFF5A
+#define ILI9341_AQUA 0x07FF
+#define ILI9341_AQUAMARINE 0x7FFA
+#define ILI9341_AZURE 0xF7FF
+#define ILI9341_BEIGE 0xF7BB
+#define ILI9341_BISQUE 0xFF38
+#define ILI9341_BLACK 0x0000
+#define ILI9341_BLANCHEDALMOND 0xFF59
+#define ILI9341_BLUE 0x001F
+#define ILI9341_BLUEVIOLET 0x895C
+#define ILI9341_BROWN 0xA145
+#define ILI9341_BURLYWOOD 0xDDD0
+#define ILI9341_CADETBLUE 0x5CF4
+#define ILI9341_CHARTREUSE 0x7FE0
+#define ILI9341_CHOCOLATE 0xD343
+#define ILI9341_CORAL 0xFBEA
+#define ILI9341_CORNFLOWERBLUE 0x64BD
+#define ILI9341_CORNSILK 0xFFDB
+#define ILI9341_CRIMSON 0xD8A7
+#define ILI9341_CYAN 0x07FF
+#define ILI9341_DARKBLUE 0x0011
+#define ILI9341_DARKCYAN 0x0451
+#define ILI9341_DARKGOLDENROD 0xBC21
+#define ILI9341_DARKGRAY 0xAD55
+#define ILI9341_DARKGREEN 0x0320
+#define ILI9341_DARKKHAKI 0xBDAD
+#define ILI9341_DARKMAGENTA 0x8811
+#define ILI9341_DARKOLIVEGREEN 0x5345
+#define ILI9341_DARKORANGE 0xFC60
+#define ILI9341_DARKORCHID 0x9999
+#define ILI9341_DARKRED 0x8800
+#define ILI9341_DARKSALMON 0xECAF
+#define ILI9341_DARKSEAGREEN 0x8DF1
+#define ILI9341_DARKSLATEBLUE 0x49F1
+#define ILI9341_DARKSLATEGRAY 0x2A69
+#define ILI9341_DARKTURQUOISE 0x067A
+#define ILI9341_DARKVIOLET 0x901A
+#define ILI9341_DEEPPINK 0xF8B2
+#define ILI9341_DEEPSKYBLUE 0x05FF
+#define ILI9341_DIMGRAY 0x6B4D
+#define ILI9341_DODGERBLUE 0x1C9F
+#define ILI9341_FIREBRICK 0xB104
+#define ILI9341_FLORALWHITE 0xFFDE
+#define ILI9341_FORESTGREEN 0x2444
+#define ILI9341_FUCHSIA 0xF81F
+#define ILI9341_GAINSBORO 0xDEFB
+#define ILI9341_GHOSTWHITE 0xFFDF
+#define ILI9341_GOLD 0xFEA0
+#define ILI9341_GOLDENROD 0xDD24
+#define ILI9341_GRAY 0x8410
+#define ILI9341_GREEN 0x0400
+#define ILI9341_GREENYELLOW 0xAFE5
+#define ILI9341_HONEYDEW 0xF7FE
+#define ILI9341_HOTPINK 0xFB56
+#define ILI9341_INDIANRED 0xCAEB
+#define ILI9341_INDIGO 0x4810
+#define ILI9341_IVORY 0xFFFE
+#define ILI9341_KHAKI 0xF731
+#define ILI9341_LAVENDER 0xE73F
+#define ILI9341_LAVENDERBLUSH 0xFF9E
+#define ILI9341_LAWNGREEN 0x7FE0
+#define ILI9341_LEMONCHIFFON 0xFFD9
+#define ILI9341_LIGHTBLUE 0xAEDC
+#define ILI9341_LIGHTCORAL 0xF410
+#define ILI9341_LIGHTCYAN 0xE7FF
+#define ILI9341_LIGHTGOLDENRODYELLOW 0xFFDA
+#define ILI9341_LIGHTGREEN 0x9772
+#define ILI9341_LIGHTGREY 0xD69A
+#define ILI9341_LIGHTPINK 0xFDB8
+#define ILI9341_LIGHTSALMON 0xFD0F
+#define ILI9341_LIGHTSEAGREEN 0x2595
+#define ILI9341_LIGHTSKYBLUE 0x867F
+#define ILI9341_LIGHTSLATEGRAY 0x7453
+#define ILI9341_LIGHTSTEELBLUE 0xB63B
+#define ILI9341_LIGHTYELLOW 0xFFFC
+#define ILI9341_LIME 0x07E0
+#define ILI9341_LIMEGREEN 0x3666
+#define ILI9341_LINEN 0xFF9C
+#define ILI9341_MAGENTA 0xF81F
+#define ILI9341_MAROON 0x8000
+#define ILI9341_MEDIUMAQUAMARINE 0x6675
+#define ILI9341_MEDIUMBLUE 0x0019
+#define ILI9341_MEDIUMORCHID 0xBABA
+#define ILI9341_MEDIUMPURPLE 0x939B
+#define ILI9341_MEDIUMSEAGREEN 0x3D8E
+#define ILI9341_MEDIUMSLATEBLUE 0x7B5D
+#define ILI9341_MEDIUMSPRINGGREEN 0x07D3
+#define ILI9341_MEDIUMTURQUOISE 0x4E99
+#define ILI9341_MEDIUMVIOLETRED 0xC0B0
+#define ILI9341_MIDNIGHTBLUE 0x18CE
+#define ILI9341_MINTCREAM 0xF7FF
+#define ILI9341_MISTYROSE 0xFF3C
+#define ILI9341_MOCCASIN 0xFF36
+#define ILI9341_NAVAJOWHITE 0xFEF5
+#define ILI9341_NAVY 0x0010
+#define ILI9341_OLDLACE 0xFFBC
+#define ILI9341_OLIVE 0x8400
+#define ILI9341_OLIVEDRAB 0x6C64
+#define ILI9341_ORANGE 0xFD20
+#define ILI9341_ORANGERED 0xFA20
+#define ILI9341_ORCHID 0xDB9A
+#define ILI9341_PALEGOLDENROD 0xEF55
+#define ILI9341_PALEGREEN 0x9FD3
+#define ILI9341_PALETURQUOISE 0xAF7D
+#define ILI9341_PALEVIOLETRED 0xDB92
+#define ILI9341_PAPAYAWHIP 0xFF7A
+#define ILI9341_PEACHPUFF 0xFED7
+#define ILI9341_PERU 0xCC27
+#define ILI9341_PINK 0xFE19
+#define ILI9341_PLUM 0xDD1B
+#define ILI9341_POWDERBLUE 0xB71C
+#define ILI9341_PURPLE 0x8010
+#define ILI9341_RED 0xF800
+#define ILI9341_ROSYBROWN 0xBC71
+#define ILI9341_ROYALBLUE 0x435C
+#define ILI9341_SADDLEBROWN 0x8A22
+#define ILI9341_SALMON 0xFC0E
+#define ILI9341_SANDYBROWN 0xF52C
+#define ILI9341_SEAGREEN 0x2C4A
+#define ILI9341_SEASHELL 0xFFBD
+#define ILI9341_SIENNA 0xA285
+#define ILI9341_SILVER 0xC618
+#define ILI9341_SKYBLUE 0x867D
+#define ILI9341_SLATEBLUE 0x6AD9
+#define ILI9341_SLATEGRAY 0x7412
+#define ILI9341_SNOW 0xFFDF
+#define ILI9341_SPRINGGREEN 0x07EF
+#define ILI9341_STEELBLUE 0x4416
+#define ILI9341_TAN 0xD5B1
+#define ILI9341_TEAL 0x0410
+#define ILI9341_THISTLE 0xDDFB
+#define ILI9341_TOMATO 0xFB08
+#define ILI9341_TURQUOISE 0x471A
+#define ILI9341_VIOLET 0xEC1D
+#define ILI9341_WHEAT 0xF6F6
+#define ILI9341_WHITE 0xFFFF
+#define ILI9341_WHITESMOKE 0xF7BE
+#define ILI9341_YELLOW 0xFFE0
+#define ILI9341_YELLOWGREEN 0x9E66
+
+#define COLOR_NODEF 0x0001
 //commands
 #define VSCRDEF 0x33
 #define VSCRSADD 0x37
@@ -282,7 +426,7 @@
 
 struct _current_font
 {
-	uint8_t* font;
+	unsigned char* font;
 	uint8_t x_size;
 	uint8_t y_size;
 	uint8_t offset;
@@ -312,11 +456,11 @@ public:
     void clrScr();
     void drawRect(int x1, int y1, int x2, int y2, uint16_t color=COLOR_NODEF);
 		
-    void drawPixel(int x, int y, uint16_t color=NULL);
+    void drawPixel(int x, int y, uint16_t color=COLOR_NODEF);
     void drawLine(int x1, int y1, int x2, int y2, uint16_t color=COLOR_NODEF);
 		
     void setColor(uint8_t r, uint8_t g, uint8_t b);
-    void setColor(word color);
+    void setColor(uint16_t color);
     uint16_t getColor();
     void setBackColor(uint8_t r, uint8_t g, uint8_t b);
     void setBackColor(uint32_t color);
@@ -328,21 +472,34 @@ public:
      * @param fg WORD, foreground color
      * @param bg WORD, background color
      */
-    __attribute__((always_inline)) void setTextColor(uint32_t fg, uint32_t bg) {
+    __attribute__((always_inline)) void setTextColor(uint32_t fg, uint32_t bg=COLOR_BLACK) {
 			setColor(fg);setBackColor(bg);
     };
- 		
+
     void fillScr(uint8_t r, uint8_t g, uint8_t b);
     /**
      * @desc  Fill all screen with color
      * @param color color number
      */
     void fillScr(uint16_t color);
+
+    __attribute__((always_inline)) void fillScreen(uint16_t color) {
+    	fillScr(color);
+    }
     
     void fillRect(int x1, int y1, int x2, int y2,  uint16_t color=COLOR_NODEF,  boolean setCS = true);
 		
     void drawRoundRect(int x1, int y1, int x2, int y2, uint16_t color=COLOR_NODEF);
+
+    __attribute__((always_inline))  void drawRoundRect(int x1, int y1, int x2, int y2, int r, uint16_t color=COLOR_NODEF) {
+    	drawRoundRect(x1, y1, x2, y2, color);
+    }
+
     void fillRoundRect(int x1, int y1, int x2, int y2, uint16_t color=COLOR_NODEF);
+
+    __attribute__((always_inline))  void fillRoundRect(int x1, int y1, int x2, int y2, int r, uint16_t color=COLOR_NODEF) {
+    	fillRoundRect(x1, y1, x2, y2, color);
+    }
     /**
      * @desc  Draw circle
      * @param x
@@ -362,7 +519,7 @@ public:
      * @desc  set font for next print
      * @param font pointer to font
      */
-    void setFont(uint8_t* font);
+    void setFont(const unsigned char* font);
     
     /**
      * @desc  pointer to font
@@ -404,6 +561,7 @@ public:
     * @param x
     * @param y
     */
+    void print(const __FlashStringHelper* str, int x, int y, int deg=0);
     void print(String st, int x, int y, int deg=0);
     
     /**
@@ -412,14 +570,14 @@ public:
      * @param x
      * @param y
      */
-    void print(char *st, int x, int y, int deg=0);
+    void print(const char *st, int x, int y, int deg=0);
     
     /**
      * @desc  print string into area defined with setTextArea.
      *        Increment line after print
      * @param st string
      */
-    void print(char *st);
+    void print(const char *st);
     
     /**
      * @desc  print string into area defined with setTextArea.
@@ -449,7 +607,7 @@ public:
      */
         void println(long n);
 		void rotateChar(byte c, int x, int y, int pos, int deg);
-		void printNumI(long num, int x, int y, int length=0, char filler=' ');
+		void printNumI(long num, int x, int y, int length=0, char filler=' ', const unsigned char * font = NULL);
     
     
 		
@@ -480,6 +638,9 @@ public:
    	  	void scrollAddress(uint16_t VSP);
 		void _convert_float(char *buf, double num, int width, byte prec);   	   		
 */	
+      	void drawHLine(int x, int y, int l, uint16_t color = COLOR_NODEF);
+      	void drawVLine(int x, int y, int l, uint16_t color = COLOR_NODEF);
+
 	protected:
 		int printProportionalChar(byte c, int x, int y);
 		int rotatePropChar(byte c, int x, int y, int offset, int deg);
@@ -488,7 +649,7 @@ public:
     bool getCharPtr(byte c, propFont& font);
     byte fch, fcl, bch, bcl;
     byte orient;
-    long disp_x_size, disp_y_size;
+    int disp_x_size, disp_y_size;
     _current_font	cfont;
     boolean _transparent;
     uint8_t rotation;
@@ -500,9 +661,9 @@ public:
     uint16_t _xmax, _ymax ;
 
     void setXY(int x1, int y1, int x2, int y2);
-    void drawHLine(int x, int y, int l, uint16_t color = NULL);
+
     void drawHLine_noCS(int x, int y, int l,uint16_t color = NULL);
-    void drawVLine(int x, int y, int l, uint16_t color = NULL);
+
     void drawVLine_noCS(int x, int y, int l, uint16_t color = NULL);
     void drawPixel_noCS(int x, int y, uint16_t color = NULL);
     void setPixel(uint16_t color);
