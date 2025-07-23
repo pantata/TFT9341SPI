@@ -638,8 +638,8 @@ public:
    	  	void scrollAddress(uint16_t VSP);
 		void _convert_float(char *buf, double num, int width, byte prec);   	   		
 */	
-      	void drawHLine(int x, int y, int l, uint16_t color = COLOR_NODEF);
-      	void drawVLine(int x, int y, int l, uint16_t color = COLOR_NODEF);
+      	void drawHLine(int x, int y, uint16_t l, uint16_t color = COLOR_NODEF);
+      	void drawVLine(int x, int y, uint16_t l, uint16_t color = COLOR_NODEF);
 
 	protected:
 		int printProportionalChar(byte c, int x, int y);
@@ -649,7 +649,7 @@ public:
     bool getCharPtr(byte c, propFont& font);
     byte fch, fcl, bch, bcl;
     byte orient;
-    int disp_x_size, disp_y_size;
+    uint16_t disp_x_size, disp_y_size;
     _current_font	cfont;
     boolean _transparent;
     uint8_t rotation;
@@ -662,10 +662,9 @@ public:
 
     void setXY(int x1, int y1, int x2, int y2);
 
-    void drawHLine_noCS(int x, int y, int l,uint16_t color = NULL);
-
-    void drawVLine_noCS(int x, int y, int l, uint16_t color = NULL);
-    void drawPixel_noCS(int x, int y, uint16_t color = NULL);
+    void drawHLine_noCS(int x, int y, uint16_t l, uint16_t color = COLOR_NODEF);
+    void drawVLine_noCS(int x, int y, uint16_t l, uint16_t color = COLOR_NODEF);
+    void drawPixel_noCS(int x, int y, uint16_t color = COLOR_NODEF);
     void setPixel(uint16_t color);
     void printChar(byte c, int x, int y);
       
